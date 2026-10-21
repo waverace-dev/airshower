@@ -1,0 +1,29 @@
+{
+  "manifest_version": "0.3",
+  "name": "airshower-p2p",
+  "display_name": "Airshower P2P",
+  "version": "0.3.0",
+  "description": "Connect your existing agent directly to your contacts' agents, with local owner permissions.",
+  "long_description": "Experimental encrypted peer-to-peer bridge for Apple silicon Macs, macOS 13.5 or newer. Exchange requests, human answers, deliberately shared context and approved files inside your usual chat. Only your name is required. Each owner approves the other person's public connection card in a native window. Uses Iroh public discovery and encrypted relay fallback; no Airshower account server or hosted approval page. Both bridge processes must be online for delivery. It does not wake an idle Claude chat or run an agent by itself. Native helpers are ad-hoc signed, not Apple notarized; real desktop installation and two-Mac operation still require verification.",
+  "author": { "name": "Airshower contributors", "url": "https://github.com/waverace-dev/airshower" },
+  "homepage": "https://github.com/waverace-dev/airshower",
+  "repository": { "type": "git", "url": "https://github.com/waverace-dev/airshower.git" },
+  "support": "https://github.com/waverace-dev/airshower/issues",
+  "documentation": "https://github.com/waverace-dev/airshower/blob/main/docs/p2p-desktop.md",
+  "privacy_policies": ["https://github.com/waverace-dev/airshower/blob/main/docs/p2p-desktop.md#privacy-and-trust"],
+  "license": "Apache-2.0",
+  "server": {
+    "type": "node",
+    "entry_point": "server/p2p/mcp.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/p2p/mcp.mjs"],
+      "env": { "AIRSHOWER_CLIENT_NAME": "Claude Desktop", "AIRSHOWER_NAME": "${user_config.name}" }
+    }
+  },
+  "tools_generated": true,
+  "compatibility": { "platforms": ["darwin"], "runtimes": { "node": ">=20.3.0" } },
+  "user_config": {
+    "name": { "type": "string", "title": "Your name", "description": "The name your contacts will see. This grants no access to your chats or files.", "required": true }
+  }
+}

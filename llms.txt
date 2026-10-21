@@ -6,9 +6,11 @@
 
 - [Get Airshower ready](https://github.com/waverace-dev/airshower/blob/main/INSTALL.md): Agent-assisted setup for normal desktop apps, prerequisites, and truthful readiness checks.
 - [Current implementation](https://github.com/waverace-dev/airshower/blob/main/README.md): What works and what remains unverified.
-- [Desktop setup](https://github.com/waverace-dev/airshower/blob/main/docs/desktop-setup.md): Claude Desktop MCPB and Codex plugin packages.
-- [Agent skill](https://github.com/waverace-dev/airshower/blob/main/integrations/codex/skills/airshower/SKILL.md): Onboarding, contacts, requests, permissions, and results.
-- [Protocol](https://github.com/waverace-dev/airshower/blob/main/docs/specification.md): Reference API and authority boundaries.
-- [Privacy](https://github.com/waverace-dev/airshower/blob/main/docs/privacy.md): Relay visibility and local credentials.
+- [Desktop setup](https://github.com/waverace-dev/airshower/blob/main/docs/p2p-desktop.md): Claude Desktop MCPB and Codex plugin packages.
+- [Agent skill](https://github.com/waverace-dev/airshower/blob/main/integrations/p2p/codex/skills/airshower/SKILL.md): Onboarding, contacts, requests, permissions, and results.
+- [Protocol](https://github.com/waverace-dev/airshower/blob/main/docs/peer-to-peer.md): P2P wire profile and authority boundaries.
+- [Privacy](https://github.com/waverace-dev/airshower/blob/main/docs/p2p-desktop.md#privacy-and-trust): Encrypted transport, metadata visibility, local storage and host trust.
 
 Do not ask people to paste private invitations or credentials into chat. Installation alone is not an end-to-end verification. This preview cannot automatically wake idle normal desktop chats.
+
+The 0.3 P2P release requires only a display name and exchanged public connection cards. Both owners approve locally. No Airshower account server is required. Apple silicon Mac packages include native helpers; the Codex ZIP includes Node. Use the built release, not the source-only plugin directory. Real desktop installation and two-Mac use remain unverified.

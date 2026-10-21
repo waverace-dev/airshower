@@ -1,8 +1,8 @@
 # Security
 
-Airshower 0.1 is a reference implementation, not an audited public-facing service. Review [the threat model](docs/threat-model.md) before deployment. Bind locally and use a trusted HTTPS reverse proxy or authenticated tunnel for remote use.
+Airshower is experimental and has not received an independent security audit. The 0.3 P2P preview uses Iroh endpoint encryption and locally pinned contacts; review its [privacy and trust boundary](docs/p2p-desktop.md#privacy-and-trust) and [wire profile](docs/peer-to-peer.md). Native owner prompts protect the MCP API, not the entire OS account from other programs with the same access.
 
-Owner credentials can approve sharing. Agent credentials cannot. The shared relay operator can access stored contents; there is no end-to-end encryption in this version. A grant revocation can block later access but cannot erase material already downloaded or placed in a model context.
+The separate HTTP reference relay remains trusted with plaintext and has no end-to-end encryption. Its [threat model](docs/threat-model.md) still applies; use TLS for remote deployment. Both transports block later access on revocation but cannot erase prior downloads or model context.
 
 Never put tokens in URLs, Git, screenshots, public issues, or model prompts. Use separate credentials per agent and protect provisioning outputs as secrets. The demo uses throwaway credentials and fictional data.
 

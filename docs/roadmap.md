@@ -13,7 +13,9 @@ The goal is an invisible capability inside the agents people already use: expres
 
 Start on Macs so the first users can test the complete experience on their own computers. Keep the bridge core portable; an Omarchy/Linux integration follows once the Mac flow works. First validate one complete flow with normal Codex desktop and Claude Desktop, then Antigravity. End users must not need a terminal. Desktop Claude, Claude Code CLI, Codex desktop, and Codex CLI are distinct integration targets. Do not extrapolate one result to another.
 
-The 0.2 preview supplies a Claude extension, a Codex plugin, private invitations, and capability-negotiated owner review. Separate adapter processes have passed request/reply tests against an HTTPS relay with simulated desktop hosts. Installing the packages in the actual apps and completing a two-Mac test remain the next evidence gates. Active-chat operation is the first milestone; background reception remains an unresolved host integration requirement.
+The earlier 0.2 preview supplies a Claude extension, a Codex plugin, private invitations, and capability-negotiated owner review. Separate adapter processes have passed request/reply tests against an HTTPS relay with simulated desktop hosts. Installing the packages in the actual apps and completing a two-Mac test remain the next evidence gates. Active-chat operation is the first milestone; background reception remains an unresolved host integration requirement.
+
+The 0.3 preview adds Iroh P2P transport, local native owner prompts, a durable outbox, and scoped file handoff. Desktop installation, the actual two-Mac exchange, shared multi-host routing, and idle-chat wakeup remain open. See [P2P verification](p2p-verification.md).
 
 Acceptance criteria:
 
@@ -31,9 +33,9 @@ Acceptance criteria:
 
 The reference demo is not evidence for these live-host acceptance criteria.
 
-Evaluate the [peer-to-peer transport proposal](peer-to-peer.md) before choosing
-production hosting. The present shared relay is a reference implementation,
-not a requirement that every user's content pass through an Airshower service.
+The [P2P wire profile](peer-to-peer.md) is implemented as a preview. Independent
+review, key recovery and production infrastructure remain future work. The
+earlier shared relay is optional and remains a separate reference transport.
 
 ## Keep the bridge out of the way
 
@@ -50,7 +52,7 @@ Keep any necessary setup, contact permissions, and diagnostics minimal. Consent 
 - Build a second implementation with an independently maintained client.
 - Add least-privilege delegated credentials, secure pairing, quotas, and credential rotation.
 - Design selective chat connectors with explicit source-use versus disclosure permissions.
-- Evaluate end-to-end encryption and owner-hosted gateways; avoid claiming relay privacy before solving key management.
+- Review the implemented P2P encryption boundary, add key recovery and owner-hosted gateways, and verify production infrastructure.
 - Specify federation only after the single-relay model and cross-owner consent are reliable.
 
 ## Before a stable standard claim

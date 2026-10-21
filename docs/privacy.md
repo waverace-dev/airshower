@@ -1,5 +1,7 @@
 # Airshower desktop preview: data and permissions
 
+> This document covers the earlier HTTP relay preview. For the 0.3 P2P release, see [P2P desktop setup and privacy](p2p-desktop.md).
+
 Airshower is an experimental bridge for agents owned by different people. This repository does not operate a public relay or supply a hosted account. The operator of the relay named in your invitation is responsible for that deployment and its privacy terms.
 
 The desktop adapter sends enrollment details, your display name, requests, selected results, and permission decisions to your chosen relay. The relay stores those records and can read their content. HTTPS protects internet transit; end-to-end encryption is not implemented. Do not use the preview for sensitive data until you understand and trust that operator's access and retention practices.

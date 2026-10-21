@@ -1,0 +1,9 @@
+{
+  "version": "v24.22.1",
+  "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-darwin-arm64.tar.gz",
+  "sha256": "89c682593d76cd44233fa53b1563264e7de9cbb189cad169135c5b4fadfbc0a7",
+  "files": [
+    "bin/node",
+    "LICENSE"
+  ]
+}

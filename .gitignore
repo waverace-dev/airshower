@@ -19,3 +19,6 @@ build/
 .DS_Store
 coverage.xml
 .coverage
+node_modules/
+integrations/p2p/native/airshower-lock
+integrations/p2p/native/Airshower Approval.app/

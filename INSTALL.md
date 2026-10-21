@@ -1,33 +1,59 @@
 # Get Airshower ready
 
-Airshower belongs inside your existing agent chat. The desktop preview adds tools for connecting with other people's agents, exchanging requests and results, and obtaining the recipient owner's decision. No separate messenger is required.
+Airshower adds peer communication inside your existing agent chat. The **0.3 P2P
+preview** targets Apple silicon Macs, macOS 13.5+. No Airshower account server,
+enrollment invitation, approval password, or end-user Terminal is needed.
 
-For a first-time agent that does not know this project, use:
+Tell your setup agent:
 
-> Get me Airshower ready from https://github.com/waverace-dev/airshower. Follow its INSTALL.md and tell me what is actually verified.
+> Get me Airshower ready from https://github.com/waverace-dev/airshower. Follow INSTALL.md and tell me what is actually verified.
 
-After installing the Codex plugin, **“Get me Airshower ready”** can invoke its onboarding skill. Publishing a repository does not make every agent automatically know that phrase.
+## Desktop packages
 
-## Normal desktop apps
+Get built packages from the [P2P preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.3.0-preview.1).
 
-**Claude Desktop:** use the `.mcpb` package from the [desktop preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.2). Claude provides its own runtime, so the person using it does not need Terminal, Python, Node installation, or a configuration-file edit. Install through Claude's extension interface, then enter the relay address, display name, private invitation, and a new approval password in the extension's settings. Keep the invitation and password out of conversation text. Ask Claude to get Airshower ready and connect the invited contact.
+- **Claude Desktop:** install `airshower-p2p-0.3.0-macos-arm64.mcpb` through its
+  extension interface. Enter only your display name. Claude supplies Node.
+- **Codex desktop:** have your setup agent load
+  `airshower-p2p-codex-0.3.0-macos-arm64.zip` through the supported local plugin
+  mechanism. It includes Node and an onboarding skill. Do not substitute the
+  source-only Git directory or ask the person to type shell commands. Report
+  any missing host-loading prerequisite honestly.
 
-**Codex desktop:** use the ZIP in the same release and its onboarding skill. The package needs an existing Node runtime and a private invitation or an already provisioned profile. The setup agent should do supported configuration work; it should not ask the person to type terminal commands. If the host cannot load the package or provide its runtime, report that missing prerequisite. Package creation is not proof of installation or store approval.
+These are previews, not vendor-directory installations. Native helpers are
+ad-hoc signed, not Apple notarized. Installation in the actual apps and a real
+two-Mac exchange still need verification. Do not bypass host security checks.
 
-Read the exact [desktop setup and verification steps](docs/desktop-setup.md). These are experimental packages; they have not been accepted into either vendor's public directory.
+## Connect someone
 
-## Connection prerequisite
+1. Say **“Get me Airshower ready.”**
+2. Ask for your **public connection card**, and exchange cards with the intended
+   person through an existing trusted conversation.
+3. Each person tells their agent to connect the other's card, then approves the
+   native window. Both directions are required. Connection grants no source
+   access or task permission.
+4. Keep both chats active for a harmless request/reply test. The recipient
+   checks their inbox and approves or answers in the native window. Confirm
+   that the result returns with correct attribution.
 
-Both people need accounts on the same reachable HTTPS relay. Airshower does not currently operate a public relay. Obtain a private, single-use invitation from the operator you intend to trust. Do not silently choose a third-party relay, start a paid service, or expose a laptop to the internet as part of setup.
+Only deliberately published context and owner-selected files can be requested.
+Each owner can require approval every time or approve exact kinds/sources. A
+question for the human always needs their actual answer.
 
-The relay operator can read exchanged content. Accepting a contact allows requests, not unrestricted chat, file, or calendar access. Each person decides whether work may proceed. HTTPS browser approvals require the recipient's approval password, followed by an explicit decision on the exact request.
+Read [desktop setup, privacy and limits](docs/p2p-desktop.md) and
+[verification evidence](docs/p2p-verification.md).
 
-An agent helping the operator can use the internal `ready`, `serve`, `invite`, and `doctor` commands in [self-hosting](docs/self-hosting.md). They are implementation tools, not the everyday user interface.
+**P2P receipt does not wake an idle Claude Desktop or local Codex chat.** The
+bridge receives while its process runs; active-chat tools check or wait for
+work. Both devices must overlap online. There is no offline mailbox or
+background model. Each app has its own identity; one active MCP process per
+app profile is supported in this preview.
 
-## Verify, don't just install
+## Earlier HTTP relay preview
 
-Use the installed `ready` tool to check relay authentication. Resolve contacts with `peers`. Send a harmless request between the intended people, verify a real owner decision, and confirm that the response arrives back in the initiating conversation. No personal file transfer is required for this first test.
-
-Report these separately: package loaded, relay reachable, identity verified, contact connected, human approval available, and actual cross-computer result received.
-
-**Automatic wakeup of idle normal Claude Desktop and local Codex chats is not implemented.** The current tools can check an inbox and wait for a request or result while the conversation is active. A successfully loaded extension must not be described as continuous background agent operation. The broader invisible bridge remains the goal.
+The [0.2 release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.2)
+and [its setup instructions](docs/desktop-setup.md) remain for comparison and
+rollback. It uses a server trusted with plaintext and is not P2P. Do not
+silently migrate or erase existing profiles. Avoid simultaneously enabling old
+and new tools with confusing names. Building a release changes no user app
+settings or startup entries.

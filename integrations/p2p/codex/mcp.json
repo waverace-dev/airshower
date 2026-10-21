@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "airshower-p2p": {
+      "type": "stdio",
+      "command": "${PLUGIN_ROOT}/server/runtime/node",
+      "args": ["${PLUGIN_ROOT}/server/p2p/mcp.mjs"],
+      "cwd": "${PLUGIN_ROOT}",
+      "env": { "AIRSHOWER_CLIENT_NAME": "Codex" }
+    }
+  }
+}

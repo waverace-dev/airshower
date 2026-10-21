@@ -1,65 +1,85 @@
-# Peer-to-peer transport proposal
+# Peer-to-peer wire profile v1
 
-Status: research proposal, checked 2026-10-21. The 0.2 desktop preview still uses
-the existing shared application relay. It is not peer-to-peer or end-to-end
-encrypted. No new networking library or service has been installed or enabled.
+Status: implemented experimental profile in desktop preview 0.3.0. The HTTP
+relay and A2A facade remain separate. This P2P profile is not A2A-compatible on
+the wire and is not an adopted standard.
 
-## Proposed experience
+## Identity and transport
 
-Each Mac keeps its own identity, contact approvals, permissions, and request
-history. Contacts pair through an authenticated invitation. The local bridge
-connects directly to the other person's bridge when possible, with encrypted
-relay fallback for networks that prevent a direct connection. Existing agent
-chats remain the interface. Nobody should need to configure a router or use a
-terminal.
+The implementation pins `@number0/iroh` 1.1.0. ALPN is UTF-8 `airshower/p2p/1`.
+A persistent Ed25519 public key identifies each endpoint (64 lowercase hex
+characters in this implementation). QUIC verifies possession of the private
+key. The remote key must match a locally approved, active contact before
+application messages are accepted.
 
-Public infrastructure may help devices find and reach each other without
-holding application plaintext. This is distinct from the current application
-relay, which stores and authorizes requests and can read their content. A peer
-transport must preserve recipient-owned authorization, authenticated human
-answers, replay protection, cancellation, and revocation; encryption alone
-does not supply these properties.
+A public connection card contains exactly `protocol`, `name`, `endpoint_id`,
+`ticket`. The protocol is `airshower/p2p/1`; the Iroh ticket must identify the
+same key. Names are self-asserted. Both owners approve exchanged cards through
+a trusted channel. No bearer secret is exchanged. The preview accepts only the
+four production relay hosts under `relay.n0.iroh.link`; arbitrary relay URLs
+are rejected. N0 discovery can resolve changing addresses. Direct IP routes
+remain pinned to the expected public key.
 
-## Candidate to evaluate first
+Infrastructure follows [Iroh production defaults](https://github.com/n0-computer/iroh/blob/main/iroh/src/defaults.rs).
+It supplies discovery, hole punching and encrypted forwarding, not offline
+storage, model execution, application permissions, or universal connectivity.
 
-[Iroh](https://github.com/n0-computer/iroh) offers public-key-addressed QUIC,
-NAT traversal, and relay fallback under MIT or Apache-2.0. Its
-[relayed traffic remains encrypted between endpoints](https://docs.iroh.computer/concepts/security-privacy).
-Relays can observe connection metadata; direct peers learn each other's IP
-addresses. We should not describe this as anonymity.
+## Application streams
 
-Its [public development relays](https://docs.iroh.computer/iroh-services/relays/public)
-are free for development and hobby use, with rate limits, no uptime guarantee,
-and support only for the latest stable release. This could avoid paid hosting
-for an initial test using harmless fixtures. It is not a promise of free
-production infrastructure.
+One bidirectional QUIC stream carries one UTF-8 JSON envelope, delimited by FIN.
+Maximum request/response size is 8 MiB. Duplicate keys, excess nesting,
+non-finite numbers, malformed fields and extra authority fields are rejected.
+Response is `{ok:true,value:...}` or sanitized `{ok:false,code:...}`. Stream
+reads, request waits, concurrent connections and application state are bounded.
 
-The [Node bindings](https://docs.iroh.computer/languages/javascript) require
-Node 20.3+ and currently provide macOS binaries for Apple silicon only.
-The present Airshower package supports Node 18+ and has no native dependencies,
-so this is not a drop-in change. A bundled native helper is another option to
-evaluate, including Intel support, signing, packaging, updates, and startup.
-[libp2p](https://docs.libp2p.io/concepts/hole-punching) is an alternative with a
-broader modular networking stack; transport support must be verified for the
-chosen language and release.
+Every envelope has `version:1` and `type`:
 
-## Evidence required before switching
+| Type | Other fields | Authority |
+| --- | --- | --- |
+| submit | request | Sender equals cryptographic peer; recipient is local. |
+| get | request_id | Original sender only. |
+| cancel | request_id | Original sender, nonterminal request. |
+| update | request snapshot | Pinned recipient updates its sender's existing request. |
+| catalog | none | Only sources published to this contact. |
+| file | request_id, source_id | Original sender, completed handoff, live permission. |
 
-- Pair two real Macs on different networks, verify their keys, and report
-  whether the connection is direct or relayed. Test both paths deliberately.
-- Keep a durable sender outbox and retry after sleep/reconnect. An offline Mac
-  cannot receive or run an agent; queued, delivered, approved, and completed
-  must remain distinct. Encrypted store-and-forward is a separate feature.
-- Retain trusted owner decisions locally. The inspected Claude Desktop build
-  offers HTTPS URL review rather than forms. P2P does not remove that UI
-  constraint: investigate a supported native owner prompt or an authenticated
-  HTTPS approval design. Do not bypass certificate checks or put authority in
-  a review URL.
-- Verify receipt separately from agent execution. A background bridge can
-  receive bytes; waking an idle desktop conversation still requires a supported
-  host integration.
-- Test revocation, duplicate delivery, expiry, process restart, key loss, and
-  forbidden source access. Reuse the current lifecycle tests where applicable.
+Canonical request fields: `id` (UUIDv4), `sender_agent_id`, `recipient_agent_id`,
+`kind`, `message`, `source_ids`, `idempotency_key`, `created_at`, `expires_at`.
+Times are integer Unix milliseconds; lifetime is at most 24 hours and creation
+allows five minutes of positive clock skew. Kinds: `message`, `ask_human`,
+`context`, `file`, `task`. Only context/file requests may have source IDs and
+require at least one. Changed replays of an ID or sender idempotency key fail.
 
-The standard should describe interoperable identity and permission semantics
-without requiring one vendor's transport or relay service.
+The sender's durable outbox retries unknown delivery without creating another
+request. Sender-local `queued` differs from recipient-authoritative states:
+`pending_approval`, `waiting_human`, `ready`, `working`, `completed`, `denied`,
+`cancelled`, `expired`.
+
+Snapshots add `status`, `revision`, `updated_at`; completion adds `result` and
+`attribution`. The sender checks scope, peer, monotonic revision, attribution
+and attachment metadata. Terminal results cannot change. Result shape:
+`{text,source_ids,attachments}`. Each attachment is `{id,filename,size,sha256}`.
+Attribution is `{kind,endpoint_id}`: human only for ask_human, otherwise agent.
+This trusts the authenticated remote implementation to enforce its owner flow;
+it does not independently attest a person's identity.
+
+## Local authorization and delivery
+
+The MCP API accepts no model-supplied approval, human answer, private key, or
+arbitrary source path. A native window collects the owner's exact decision.
+Review rechecks scope/revision after the prompt; cancellation, expiry or contact
+revocation makes an earlier decision inapplicable. Agent completion cannot
+answer human questions. Standing rules cover exact kinds/source IDs for one
+peer. Reads and file downloads recheck live permissions. Earlier copies cannot
+be retracted.
+
+Each MCP process holds a private app profile with an OS file lease. It accepts
+streams immediately while alive, pushes dirty recipient updates, and retries
+with bounded rotating sync passes. A sender distinguishes acknowledgement,
+approval, completion and pending cancellation. Both peers must overlap online.
+
+Remaining scope: shared local daemon/multiple simultaneous processes per
+profile, automatic idle-chat wakeup, offline encrypted mailboxes, key rotation,
+large-file streaming, archival, production infrastructure, natural-language
+policy evaluation and automatic chat connectors. See [desktop behavior and
+trust boundaries](p2p-desktop.md) and [verification](p2p-verification.md).

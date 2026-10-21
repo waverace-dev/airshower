@@ -22,6 +22,17 @@ These are decisions for Airshower's experimental 0.1 reference implementation, n
 
 9. **Add an ability to existing agents.** Airshower is a background bridge, not a new everyday chat destination. People express intent in their existing agent conversations; host adapters deliver incoming requests, obtain human decisions when required, and return results to the right conversation. Anyone may become an owner-approved contact. Specific people, meetings, and file exchanges illustrate the general capability; they do not limit its scope. A skill can describe the tools, but runtime delivery and authenticated approvals require actual host integration. Mac integration is the first verification target, with a portable core for later platforms.
 
+## P2P preview update (0.3)
+
+The desktop path now implements Iroh encrypted peer transport with local
+identities and bilateral public-card pinning, native owner decisions, scoped
+source catalogs, durable retry and file handoff. This is a separate wire
+profile, not an A2A endpoint or federation of the earlier HTTP servers.
+Decisions 5, 6 and 8 above describe the original HTTP prototype, not the P2P
+runtime. See [the profile](peer-to-peer.md), [trust boundaries](p2p-desktop.md)
+and [verification](p2p-verification.md). Idle-chat wakeup and shared multi-host
+routing remain unresolved.
+
 ## Open design work
 
 | Question | Needed before a broader claim |

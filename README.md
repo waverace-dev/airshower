@@ -10,15 +10,15 @@ Airshower is an open proposal for an invisible bridge that gives existing agents
 > “Ask their agent what changed in the project.”<br>
 > “Have our agents coordinate a review, and involve us when needed.”
 
-**Status: experimental protocol proposal and desktop preview.** Airshower is not an adopted standard. The local demo and integration tests use simulated agent hosts; compatibility with live desktop conversations has not been established. See [what works](#what-works-today) before integrating it.
+**Status: experimental protocol proposal and desktop preview.** Airshower is not an adopted standard. The P2P preview has real encrypted endpoint tests and desktop packages. Live desktop conversations and a two-Mac handoff still require verification. See [what works](#what-works-today) before integrating it.
 
 ## Get Airshower ready
 
 Tell an agent: **“Get me Airshower ready from https://github.com/waverace-dev/airshower. Follow INSTALL.md.”**
 
-The [setup entrypoint](INSTALL.md) describes the normal desktop path: a Claude Desktop extension and a Codex plugin with an onboarding skill. Both use the same dependency-free desktop adapter. People using Claude Desktop do not need a terminal or developer runtime installation. A shared HTTPS relay and a private invitation are still required; this project does not operate a public relay.
+The [setup entrypoint](INSTALL.md) describes the normal desktop path: a Claude Desktop extension and a Codex plugin with an onboarding skill. The 0.3 P2P preview targets Apple silicon Macs: Claude supplies its runtime, and the Codex ZIP includes one. Only a display name and exchanged public connection cards are needed. There is no Airshower account server to host. Iroh provides public discovery and encrypted relay fallback.
 
-**The desktop packages are previews.** Protocol tests cover enrollment, consent, and request/reply across separate adapter processes. They do not establish installation in the real apps or automatic wakeup of idle desktop chats. [Desktop setup and current limits](docs/desktop-setup.md).
+**The desktop packages are previews.** Tests cover encrypted peer request/reply, owner approval, scoped context/files, revocation, replay, and restart recovery. They do not establish installation in the real apps or automatic wakeup of idle desktop chats. [P2P desktop setup and current limits](docs/p2p-desktop.md).
 
 ## The experience we are building toward
 
@@ -65,20 +65,20 @@ The reference implementation uses **curated context excerpts and explicitly uplo
 
 | Capability | Current status |
 | --- | --- |
-| Separate owner and agent identities | Implemented with distinct bearer credentials and server authorization. |
-| Adding another person | Expiring, single-use enrollment and contact invitations; bilateral contact acceptance does not grant execution or source access. |
+| Local owner decisions and peer identities | P2P: persistent endpoint keys and native owner prompts. HTTP relay: separate owner/agent credentials. |
+| Adding another person | P2P: bilateral public-card approval. Pairing grants no execution or source access. HTTP relay retains invitations. |
 | Contacts, scoped grants, approval, expiry and revocation | Reference implementation, covered by tests. |
 | Human answers and agent answers | Attributed by authenticated role, not client-supplied labels. |
 | Context and file requests | Explicit sources, protected downloads, integrity checks. |
-| Immediate events and reconnect replay | Durable SQLite event log and authenticated Server-Sent Events. |
+| Immediate receipt and reconnect | P2P: encrypted streams, durable local outbox and retry. HTTP relay: SQLite events and SSE. Receipt does not wake a chat. |
 | Existing assistant tools | MCP stdio adapter, explicitly pinned to revision `2025-11-25`; protocol tests, not host certification. |
-| Desktop packaging | Claude `.mcpb` and portable Codex plugin builder; shared dependency-free Node adapter and setup skill. Actual desktop installation remains unverified. |
-| Human review through the host | Capability-negotiated forms or authenticated HTTPS review pages for URL-only hosts; tested with simulated hosts, not yet a person in the desktop apps. |
+| Desktop packaging | Apple silicon Claude `.mcpb` and Codex ZIP with Node included. Actual vendor installation remains unverified. |
+| Human review | P2P uses a local native window; no hosted approval page. The HTTP adapter retains form/HTTPS review. |
 | A2A interoperability | Optional A2A 1.0 HTTP+JSON facade with an enumerated subset; [scope and limitations](docs/a2a.md). |
 | Existing desktop conversation wake-up | **Not implemented or verified.** MCP tool availability does not wake a chat. |
 | Automatic chat access, local file discovery | **Not implemented.** Source connectors are future work. |
-| Internet deployment | HTTPS deployment guidance; not yet independently audited or tested across two Macs. |
-| Federation and end-to-end encryption | **Not implemented.** One shared relay is trusted with message contents. |
+| Internet transport | Iroh discovery, direct encrypted connections and relay fallback. See [evidence](docs/p2p-verification.md); actual two-Mac desktop operation is unverified. |
+| End-to-end encryption | Implemented for P2P via Iroh. The separate HTTP application relay remains trusted with plaintext. |
 
 ## How it fits
 
@@ -103,12 +103,12 @@ remain unimplemented. The real desktop apps still need verification.
 ## Read and build
 
 - [Specification and permission model](docs/specification.md)
-- [Get Airshower ready](INSTALL.md) and [desktop setup](docs/desktop-setup.md)
+- [Get Airshower ready](INSTALL.md) and [P2P desktop setup](docs/p2p-desktop.md)
 - [Protocol decision log](docs/decisions.md)
 - [MCP setup and integration boundaries](docs/integrations.md)
 - [A2A mapping and supported methods](docs/a2a.md)
 - [Run your own relay](docs/self-hosting.md)
-- [Peer-to-peer transport proposal](docs/peer-to-peer.md)
+- [Peer-to-peer wire profile](docs/peer-to-peer.md)
 - [Threat model](docs/threat-model.md) and [security reporting](SECURITY.md)
 - [Existing projects and what we still need to learn](docs/landscape.md)
 - [Roadmap and adoption criteria](docs/roadmap.md)

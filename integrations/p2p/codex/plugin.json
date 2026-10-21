@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "airshower-p2p",
+  "version": "0.3.0",
+  "description": "Encrypted peer communication for your existing agent, with local owner permissions.",
+  "author": { "name": "Airshower contributors", "url": "https://github.com/waverace-dev/airshower" },
+  "homepage": "https://github.com/waverace-dev/airshower",
+  "repository": "https://github.com/waverace-dev/airshower",
+  "license": "Apache-2.0",
+  "keywords": ["agents", "p2p", "permissions"],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "onboardingSkill": "./skills/airshower/SKILL.md",
+      "interface": {
+        "displayName": "Airshower P2P",
+        "shortDescription": "Connect with your contacts' agents",
+        "longDescription": "A private P2P identity and locally approved contacts in your existing chat. Apple silicon Macs, macOS 13.5+. Includes a pinned Node runtime. Receive requests while the extension is running; idle chat wakeup is not implemented. Native prompts collect actual owner decisions.",
+        "developerName": "Airshower contributors",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "websiteURL": "https://github.com/waverace-dev/airshower",
+        "defaultPrompt": ["Get me Airshower ready.", "Check my Airshower requests."],
+        "brandColor": "#82E5C4"
+      }
+    }
+  }
+}

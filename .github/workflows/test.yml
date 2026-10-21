@@ -31,3 +31,29 @@ jobs:
         run: node --test integrations/desktop/tests/*.mjs
       - name: Build desktop packages
         run: python scripts/build_desktop.py
+  p2p:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Fetch integrity-pinned native bindings (no install scripts)
+        run: python scripts/fetch_p2p_dependencies.py
+      - name: Build project-local native helpers
+        run: python scripts/build_p2p_native.py
+      - name: Offline encrypted P2P and permission tests
+        run: node --test integrations/p2p/tests/*.test.mjs
+      - name: Bundle self-contained Mac previews
+        if: runner.os == 'macOS'
+        run: |
+          python scripts/fetch_p2p_runtime.py
+          python scripts/build_p2p.py
+          python scripts/verify_p2p_packages.py

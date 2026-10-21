@@ -1,5 +1,7 @@
 # Threat model — experimental 0.1
 
+> This document covers the earlier HTTP relay preview. For the 0.3 P2P release, see [P2P desktop setup and privacy](p2p-desktop.md).
+
 Airshower's prototype enforces identity and resource scopes in server code. It has not received an independent security audit and is not a production service. Its primary boundary is between owners and between owner and agent credentials on **one trusted server**.
 
 ## Assets and trust boundaries
