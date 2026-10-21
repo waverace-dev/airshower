@@ -10,6 +10,7 @@ import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 from urllib.parse import parse_qs, quote, urlsplit
 
 from . import __version__
@@ -48,6 +49,13 @@ class AirshowerServer(ThreadingHTTPServer):
             self.consent = ConsentBroker(store, public_url)
         self.stopping = threading.Event()
         super().__init__(address, handler)
+
+    def server_bind(self):
+        # HTTPServer performs a reverse DNS lookup here only to populate a
+        # display name. The relay uses its configured public origin instead;
+        # startup must not depend on a working reverse resolver.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
 
     def shutdown(self):
         self.stopping.set()

@@ -15,6 +15,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from urllib.parse import urlsplit
 
@@ -63,21 +64,51 @@ class CLISetupTests(unittest.TestCase):
             cwd=ROOT, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True,
         )
+        stopped = None
 
         def stop():
+            nonlocal stopped
+            if stopped is not None:
+                return stopped
             if process.poll() is None:
                 process.send_signal(signal.SIGINT)
             try:
-                process.communicate(timeout=5)
+                stopped = process.communicate(timeout=5)
             except subprocess.TimeoutExpired:
                 process.kill()
-                process.communicate(timeout=5)
+                stopped = process.communicate(timeout=5)
+            return stopped
 
         self.addCleanup(stop)
+        captured = {"stdout": bytearray(), "stderr": bytearray()}
+        # A cold macOS runner can spend tens of seconds resolving its local
+        # hostname while HTTPServer binds. Keep a deadline, but retain both
+        # output streams so an actual crash is distinguishable from slowness.
+        deadline = time.monotonic() + 45
+        line = None
         with selectors.DefaultSelector() as selector:
-            selector.register(process.stdout, selectors.EVENT_READ)
-            self.assertTrue(selector.select(timeout=10), "Relay did not report its listen address")
-        line = process.stdout.readline()
+            selector.register(process.stdout, selectors.EVENT_READ, "stdout")
+            selector.register(process.stderr, selectors.EVENT_READ, "stderr")
+            while line is None and time.monotonic() < deadline:
+                for key, _ in selector.select(timeout=min(0.5, max(0, deadline - time.monotonic()))):
+                    chunk = os.read(key.fileobj.fileno(), 4096)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    captured[key.data].extend(chunk)
+                if b"\n" in captured["stdout"]:
+                    line = bytes(captured["stdout"]).splitlines(keepends=True)[0].decode("utf-8", "replace")
+                    break
+                if process.poll() is not None or any(len(value) > 32768 for value in captured.values()):
+                    break
+        if line is None:
+            was_running = process.poll() is None
+            remaining_stdout, remaining_stderr = stop()
+            stdout = captured["stdout"].decode("utf-8", "replace") + remaining_stdout
+            stderr = captured["stderr"].decode("utf-8", "replace") + remaining_stderr
+            reason = "startup deadline exceeded" if was_running else "child exited before readiness"
+            self.fail("Relay {} (exit {}).\nstdout:\n{}\nstderr:\n{}".format(
+                reason, process.returncode, stdout[-32768:], stderr[-32768:]))
         match = re.fullmatch(r"Airshower experimental reference server listening on 127\.0\.0\.1:(\d+)\n", line)
         self.assertIsNotNone(match, line)
         self.assert_no_secrets(line)

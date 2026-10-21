@@ -15,6 +15,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import uuid
@@ -22,6 +23,18 @@ import uuid
 from airshower.client import APIError as ClientAPIError, Client
 from airshower.server import create_server
 from airshower.store import Store
+
+
+class ListenerStartupTests(unittest.TestCase):
+    def test_loopback_listener_does_not_require_reverse_dns(self):
+        store = Store(":memory:", "test-only-listener-administrator-token")
+        self.addCleanup(store.close)
+        with patch("socket.getfqdn", side_effect=AssertionError("Reverse DNS unavailable")):
+            server = create_server(store, host="127.0.0.1", port=0)
+        self.addCleanup(server.server_close)
+        self.assertEqual(server.server_name, "127.0.0.1")
+        self.assertGreater(server.server_port, 0)
+        self.assertEqual(server.socket.getsockname(), server.server_address)
 
 
 class RuntimeHTTPTests(unittest.TestCase):

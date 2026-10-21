@@ -2,7 +2,7 @@
 
 The intended everyday interface is the agent conversation you already use. This preview supplies a Claude Desktop extension and a Codex plugin, with a dependency-free Node adapter shared between them. It has no separate chat app.
 
-Download the packages and checksums from the [0.2 desktop preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.1). They currently require a shared relay; [peer-to-peer transport](peer-to-peer.md) is a proposal, not a feature of these packages.
+Download the packages and checksums from the [0.2 desktop preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.2). They currently require a shared relay; [peer-to-peer transport](peer-to-peer.md) is a proposal, not a feature of these packages.
 
 ## Claude Desktop
 

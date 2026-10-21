@@ -2,6 +2,7 @@
 
 ## 0.2.0 — experimental desktop preview
 
+- Preview 2 removes unnecessary reverse DNS from relay startup and improves cold-runner CLI test diagnostics; desktop package bytes are unchanged.
 - Added a dependency-free desktop MCP adapter, a reproducible Claude Desktop extension, and a portable Codex plugin with an onboarding skill.
 - Added private, restart-safe setup; single-use enrollment and contact invitations; and separate identity, connection, and live-host diagnostics.
 - Added owner review through native forms or password-authenticated HTTPS pages, selected by host capabilities. Opening a review page never approves an action.

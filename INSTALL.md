@@ -10,7 +10,7 @@ After installing the Codex plugin, **“Get me Airshower ready”** can invoke i
 
 ## Normal desktop apps
 
-**Claude Desktop:** use the `.mcpb` package from the [desktop preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.1). Claude provides its own runtime, so the person using it does not need Terminal, Python, Node installation, or a configuration-file edit. Install through Claude's extension interface, then enter the relay address, display name, private invitation, and a new approval password in the extension's settings. Keep the invitation and password out of conversation text. Ask Claude to get Airshower ready and connect the invited contact.
+**Claude Desktop:** use the `.mcpb` package from the [desktop preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.2.0-preview.2). Claude provides its own runtime, so the person using it does not need Terminal, Python, Node installation, or a configuration-file edit. Install through Claude's extension interface, then enter the relay address, display name, private invitation, and a new approval password in the extension's settings. Keep the invitation and password out of conversation text. Ask Claude to get Airshower ready and connect the invited contact.
 
 **Codex desktop:** use the ZIP in the same release and its onboarding skill. The package needs an existing Node runtime and a private invitation or an already provisioned profile. The setup agent should do supported configuration work; it should not ask the person to type terminal commands. If the host cannot load the package or provide its runtime, report that missing prerequisite. Package creation is not proof of installation or store approval.
 
