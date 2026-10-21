@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airshower"
+version = "0.1.0"
+description = "An open collaboration profile and reference bridge for people and their agents"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [{name = "Airshower contributors"}]
+dependencies = []
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Communications",
+]
+
+[project.scripts]
+airshower = "airshower.__main__:main"
+
+[tool.setuptools]
+packages = ["airshower"]

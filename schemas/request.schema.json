@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:airshower:0.1:create-request",
+  "title": "Airshower 0.1 Create Request",
+  "description": "Experimental create-request payload for POST /v1/requests. Server-side checks additionally enforce UTF-8 byte limits, authentication, contacts, source ownership and kind, current consent, and idempotency.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recipient_agent_id",
+    "kind",
+    "message",
+    "source_ids",
+    "idempotency_key"
+  ],
+  "properties": {
+    "recipient_agent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S",
+      "description": "Opaque ID of the recipient agent, at most 128 UTF-8 bytes; the sender is derived from authentication."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["message", "ask_human", "context", "file", "task"]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "\\S",
+      "description": "Request text; the server also enforces a 16 KiB UTF-8 byte limit."
+    },
+    "source_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "\\S"
+      },
+      "description": "Explicit source IDs belonging to the recipient owner. Context/file requests require nonempty sources of the matching kind. The server limits each context request to 1 MiB of total UTF-8 source text. Knowing an ID does not grant access."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S",
+      "description": "Sender-scoped replay key, at most 128 UTF-8 bytes. The same key and exact payload return the existing request; a changed payload conflicts."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {"enum": ["context", "file"]}
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "source_ids": {"minItems": 1}
+        }
+      },
+      "else": {
+        "properties": {
+          "source_ids": {"maxItems": 0}
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "recipient_agent_id": "agent-recipient",
+      "kind": "ask_human",
+      "message": "Morgan, which version should we use?",
+      "source_ids": [],
+      "idempotency_key": "version-question-001"
+    },
+    {
+      "recipient_agent_id": "agent-recipient",
+      "kind": "file",
+      "message": "Please send the approved transparent logo.",
+      "source_ids": ["source-approved-logo"],
+      "idempotency_key": "logo-request-001"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+name: Conformance and reference tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12", "3.14"]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Tests (no third-party dependencies)
+        run: python -m unittest discover -s tests -v
+      - name: Demonstration
+        run: python -m airshower demo --json
+      - name: Compile package
+        run: python -m compileall -q airshower

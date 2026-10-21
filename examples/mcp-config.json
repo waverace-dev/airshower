@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "airshower": {
+      "command": "/ABSOLUTE/PATH/TO/python3",
+      "args": ["-m", "airshower", "mcp"],
+      "env": {
+        "AIRSHOWER_URL": "http://127.0.0.1:7340",
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/airshower"
+      }
+    }
+  }
+}
