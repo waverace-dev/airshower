@@ -4,6 +4,13 @@ Airshower 0.1 provides an experimental MCP stdio adapter and an HTTP API. No
 provider account is needed to run its local protocol tests. Actual agent runs
 remain subject to the provider's permissions, availability and usage charges.
 
+The intended integration adds an ability inside an existing agent chat. The user
+can address any owner-approved contact in ordinary language; the local agent
+uses the bridge, the recipient's agent follows its owner's rules, and the result
+returns to the initiating conversation. A skill can teach tool use, but cannot
+by itself supply a persistent connection, wake a host, or authenticate a human
+decision. No separate Airshower chat application is required by this design.
+
 The adapter implements a **legacy MCP 2025-11-25 compatibility subset**, explicitly
 pinned to that revision. It supports `initialize`, `notifications/initialized`,
 `ping`, `tools/list` and `tools/call`. It does not claim latest-version or complete
@@ -97,8 +104,9 @@ bytes or chat bodies. The receiving agent still needs to fetch authorized data.
 **This stdio adapter does not wake an idle desktop conversation.** It does not
 silently start a model run, inject a prompt, poll on the model's behalf or claim
 that a tool-list notification would make a model respond. MCP tools become useful
-when the host chooses to invoke them. A future companion must connect SSE to an
-explicitly supported host input/session API and keep local approval boundaries.
+when the host chooses to invoke them. A future background adapter must connect
+SSE to an explicitly supported host input/session API, route replies to the
+initiating conversation, and keep local approval boundaries.
 
 | Surface | Status in this repository |
 | --- | --- |
@@ -106,7 +114,29 @@ explicitly supported host input/session API and keep local approval boundaries.
 | Codex Desktop or CLI | No live integration or existing-conversation wakeup verified. |
 | Claude Desktop or Claude Code | No live integration or existing-conversation wakeup verified. |
 | Antigravity | No live integration or existing-conversation wakeup verified. |
-| Phone, sleeping computer, offline device | No companion shipped; relay history can be replayed after a client reconnects. |
+| Phone, sleeping computer, offline device | No host wakeup or push integration shipped; relay history can be replayed after a client reconnects. |
+
+## Human decisions inside the existing host
+
+The intended experience lets a recipient's agent ask its owner when their rules
+require it. The current implementation exposes owner decisions through the HTTP
+API only; the model-facing MCP tools cannot approve requests or turn model output
+into human authorization. A host integration still needs a trusted way to show
+the question, authenticate the owner's response, and resume the pending request
+without giving the agent an owner credential.
+
+The current grant model checks request kinds and explicit source IDs. It does
+not interpret a rule such as “never arrange meetings without asking me,” enforce
+calendar constraints, or authorize purchases and bookings in other services.
+Those actions remain subject to the recipient's host and tool permissions.
+Receiving a `task` request or permission to process it is not blanket authority
+to commit the owner to every action described in its text. Finer action scopes
+and the host approval contract need implementation and end-to-end verification.
+
+A completed task currently reports an agent's result; it does not independently
+prove that an external action happened. Confirming a meeting or another shared
+commitment needs appropriate evidence from the participating tools and people.
+A structured negotiation protocol is not implemented by the current task API.
 
 Chat history access is also separate from messaging. The current relay exposes
 only sources an owner explicitly registers. It does not scan local conversations,

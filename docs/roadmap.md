@@ -1,6 +1,6 @@
 # Roadmap and adoption criteria
 
-The goal is a useful interoperable experience. Adoption is earned through working integrations and evidence; no vendor commitments are assumed.
+The goal is an invisible capability inside the agents people already use: express an intent in an existing chat, connect with another person's agent, and receive the outcome in that chat. Anyone can be an owner-approved contact. Dates, files, and questions are examples of a general bridge, not separate products. Adoption is earned through working integrations and evidence; no vendor commitments are assumed.
 
 ## 0.1: reviewable starting point
 
@@ -9,16 +9,19 @@ The goal is a useful interoperable experience. Adoption is earned through workin
 - Explicit MCP protocol pin and optional A2A facade.
 - Public limitations, threat model, and contribution path.
 
-## Next: two real people, two real computers
+## Next: existing agent chats on two Macs
 
-First validate one complete flow with Codex and Claude Code, then Antigravity. Desktop Claude, Claude Code CLI, Codex Desktop, and Codex CLI are distinct integration targets. Do not extrapolate one result to another.
+Start on Macs so the first users can test the complete experience on their own computers. Keep the bridge core portable; an Omarchy/Linux integration follows once the Mac flow works. First validate one complete flow with Codex and Claude Code, then Antigravity. Desktop Claude, Claude Code CLI, Codex Desktop, and Codex CLI are distinct integration targets. Do not extrapolate one result to another.
 
 Acceptance criteria:
 
 - Invite and authenticate the second owner without exchanging AI-provider credentials.
+- Add and remove contacts through an owner-authorized flow; route requests to each recipient's designated agent without hardcoded people or providers.
+- Initiate a request from an ordinary conversation with the existing agent, without opening an Airshower chat app.
 - Register an exact agent/session identity; verify liveness separately from tool availability.
 - Receive a request through internet connectivity while the app is idle.
-- Ask the human, record the answer, and deliver it to the original chat.
+- Apply the recipient's rules independently of the sender's wishes. For an action requiring human consent, ask through the recipient's supported host interface, record an authenticated decision, and continue only after approval.
+- Deliver the result to the original chat, distinguishing completion, refusal, a counterproposal, waiting, and unavailability. These outcomes need a defined mapping; they are not all distinct protocol states today.
 - Share a selected file and verify bytes and provenance on the other computer.
 - Block a disallowed chat, file, recipient, or action at the runtime boundary.
 - Demonstrate duplicate suppression, offline replay, expiry and revocation.
@@ -26,9 +29,13 @@ Acceptance criteria:
 
 The reference demo is not evidence for these live-host acceptance criteria.
 
-## Make it approachable
+## Keep the bridge out of the way
 
-Build a small contact/inbox/approval interface. Use a calm dark-navy and mint palette, high contrast, readable typography, and restrained motion. Show author, purpose, source scope and status in plain language. Protocol internals belong in diagnostics, not the consent prompt. Test the flow with people who do not use terminals.
+Expose narrowly scoped tools to existing agents, with optional skill instructions that explain how to use them. A background adapter handles delivery, reconnects, and supported host wakeup. Return results and human questions to the relevant existing conversations. A standalone messenger, contact feed, or conversation inbox is not the primary product.
+
+Use the host's trusted approval mechanism where it can authenticate the owner's decision separately from model output. Owner credentials must stay outside model-facing tools. If a host cannot support that boundary or receive requests, report the limitation explicitly; tool availability alone is not a complete integration.
+
+Keep any necessary setup, contact permissions, and diagnostics minimal. Consent prompts should identify the requester, purpose, scope, and consequence in plain language. Match the host's interface; any Airshower-owned setup surface should retain the project's navy and mint palette. Test the flow with people who do not use terminals.
 
 ## Make it independently implementable
 

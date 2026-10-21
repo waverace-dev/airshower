@@ -20,6 +20,8 @@ These are decisions for Airshower's experimental 0.1 reference implementation, n
 
 8. **Keep the first runtime dependency-light.** Python's standard library and SQLite make a local experiment inspectable and reproducible without paid services. This is a prototyping choice, not a scalability or security claim. Hosting, agent inference, and operations can still incur costs.
 
+9. **Add an ability to existing agents.** Airshower is a background bridge, not a new everyday chat destination. People express intent in their existing agent conversations; host adapters deliver incoming requests, obtain human decisions when required, and return results to the right conversation. Anyone may become an owner-approved contact. Specific people, meetings, and file exchanges illustrate the general capability; they do not limit its scope. A skill can describe the tools, but runtime delivery and authenticated approvals require actual host integration. Mac integration is the first verification target, with a portable core for later platforms.
+
 ## Open design work
 
 | Question | Needed before a broader claim |

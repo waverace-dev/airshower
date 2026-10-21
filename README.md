@@ -4,13 +4,23 @@
 
 **Your agent. Their agent. A shared understanding.**
 
-Airshower is an open proposal for people and their agents to exchange requests, context, and files across apps and computers—with explicit permission and clear attribution.
+Airshower is an open proposal for an invisible bridge that gives existing agents the ability to connect and interact across people, apps, and computers—with explicit permission and clear attribution. You express an intent in the agent chat you already use; your agent uses Airshower to reach another person's agent and brings the outcome back to that conversation.
 
 > “Ask Morgan for the final logo.”<br>
 > “Ask their agent what changed in the project.”<br>
 > “Have our agents coordinate a review, and involve us when needed.”
 
 **Status: experimental v0.1 proposal and reference implementation.** Airshower is not an adopted standard. The local demo works with simulated agent clients; compatibility with live desktop conversations has not been established. See [what works](#what-works-today) before integrating it.
+
+## The experience we are building toward
+
+Airshower adds a capability to your existing agent, similar to a tool or skill. Its transport, identity, routing, and permission checks run underneath that agent experience. A skill can explain how to use the bridge; a connected runtime and host adapter must deliver requests and results.
+
+Anyone can be a contact: a friend, colleague, collaborator, or another person who chooses to connect. Each person controls which of their agents receives requests and what those agents may do. Adding a contact permits requests; it does not grant access to private conversations, files, or actions. The design should work across agent providers and computers, with support verified separately for each host.
+
+For example, you could ask your usual agent to arrange a meeting with a contact. Their agent checks its owner's rules and asks them in their existing agent experience if confirmation is required. Your agent receives a confirmed arrangement, a counterproposal, a refusal, or an explicit pending/unavailable state. Delivery alone is never confirmation.
+
+Meetings, questions, context exchange, and file handoffs are examples of the general bridge. The agents and their authorized tools do the actual work. Airshower carries the interaction and its permission boundaries; the intended everyday experience stays in existing agent chats. A separate Airshower chat app is not a product requirement.
 
 ## Try the complete flow
 
@@ -39,7 +49,7 @@ Airshower proposes a common profile for five interactions:
 | Request a file | Hand over a permitted file, retaining its name, type, and digest. |
 | Delegate a task | Track a request through acceptance and a reported result. |
 
-Permissions belong to the receiving person. A contact relationship allows incoming requests; an action/source grant or explicit human decision allows processing. An agent credential cannot create grants or impersonate an owner.
+Permissions belong to the receiving person. A contact relationship allows incoming requests; an action/source grant or explicit human decision allows processing. An agent credential cannot create grants or impersonate an owner. The current grants cover request kinds and explicit sources; rules such as “always ask me before agreeing to a meeting” still require host-side policy and an authenticated human approval path. They are not implemented as a natural-language policy engine.
 
 The reference implementation uses **curated context excerpts and explicitly uploaded files**. It does not crawl your chats or disk. Restricting the natural-language content an AI might infer or repeat needs additional application controls; source permissions alone cannot prove that a summary contains no sensitive information.
 
@@ -63,14 +73,18 @@ The reference implementation uses **curated context excerpts and explicitly uplo
 
 ```mermaid
 flowchart LR
-    A[Person A] --> AP[Their permissions]
-    AA[Their agents] <--> R[Airshower relay]
-    R <--> BA[Other person's agents]
-    B[Person B] --> BP[Their permissions]
+    A[Person A in their usual agent chat] <--> AA[Their agent]
+    AA <--> R[Airshower bridge]
+    R <--> BA[Contact's designated agent]
+    BA <--> B[Person B in their usual agent chat]
+    A --> AP[Their permissions]
+    B --> BP[Their permissions]
     AP --> R
     BP --> R
-    R --> H[Human questions and decisions]
 ```
+
+This shows the intended experience. In-host delivery, conversation routing, and
+trusted approval integration are still unimplemented.
 
 **A2A** supplies an existing language for exchanging agent tasks. **MCP** supplies tools that an assistant can call. Airshower explores the ownership, permission, attribution, and handoff behavior around those interactions. The custom reference API is deliberately separated from the [A2A adapter](docs/a2a.md); an Airshower endpoint is not automatically an A2A endpoint.
 
