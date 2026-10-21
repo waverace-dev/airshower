@@ -89,7 +89,33 @@ A completed file request permits the sender agent or sender owner to download on
 
 ## 6. HTTP reference interface
 
-All paths except `/health` require bearer authentication. JSON request and response bodies use UTF-8. Times are Unix timestamps. The default server bind MUST be `127.0.0.1`. Internet deployment requires an authenticated, correctly configured HTTPS deployment; this prototype supplies neither public hosting nor a production hardening guarantee.
+The desktop preview adds an opt-in enrollment and browser-review layer without
+changing the request kinds below. `POST /v1/enrollments` (admin) issues a bounded,
+expiring, single-use credential. `POST /v1/enroll` redeems it atomically for a new
+owner and agent; an optional `consent_secret` enrolls a separate approval password
+as a salted scrypt hash. Enrollment capabilities are stored as hashes and are
+not ordinary owner credentials. A definite lost-response outcome requires
+operator recovery rather than replaying a credential-issuing operation blindly.
+
+Owners can issue `POST /v1/contact-invites` and accept one through
+`POST /v1/contact-invites/accept`. Issuance is the inviter's consent; acceptance is
+the other owner's consent. The two directional contact records are created
+atomically. No source or execution grant is created.
+
+When a public HTTPS origin is configured, owner-authenticated
+`POST /v1/consents` creates a review of a canonical pending request or a contact
+invitation. `GET /v1/consents/{id}` returns its status only to that owner. The
+public `/consent/{id}` URL is not authentication: a browser must sign in with the
+owner's approval password, receive a short-lived secure cookie, and then submit
+an explicit CSRF-protected decision. Opening the URL MUST NOT approve the
+request. A recorded review does not itself execute the underlying request; the
+trusted adapter rechecks current identity and state before applying the decision
+through the existing owner API. The adapter supplies a bounded `expires_in`
+(1–120 seconds) and respects the returned `expires_at`. It MUST close abandoned
+or unapplied reviews through owner-only `POST /v1/consents/{id}/cancel`; closed
+pages reject further decisions. Password recovery and reset are not implemented.
+
+All JSON API paths except `/health` require bearer authentication. The separate `/consent/{id}` browser pages use the password/session flow above. JSON request and response bodies use UTF-8. Times are Unix timestamps. The default server bind MUST be `127.0.0.1`. Internet deployment requires an authenticated, correctly configured HTTPS deployment; this prototype supplies neither public hosting nor a production hardening guarantee.
 
 | Method and path | Purpose / permitted actor |
 | --- | --- |

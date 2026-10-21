@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 — experimental desktop preview
+
+- Added a dependency-free desktop MCP adapter, a reproducible Claude Desktop extension, and a portable Codex plugin with an onboarding skill.
+- Added private, restart-safe setup; single-use enrollment and contact invitations; and separate identity, connection, and live-host diagnostics.
+- Added owner review through native forms or password-authenticated HTTPS pages, selected by host capabilities. Opening a review page never approves an action.
+- Added protocol tests for separate desktop adapter processes, real TLS requests, owner decisions, denied work, and human-attributed answers.
+- Published an agent-readable setup entrypoint and privacy/deployment guidance.
+
+This is a preview for active conversations. Actual desktop installation, a two-Mac internet test, idle-chat wakeup, desktop file downloads, federation, and end-to-end encryption remain unverified or unimplemented. No public relay is operated by this project. The experimental wire profile remains `airshower/0.1`.
+
 ## 0.1.0 — experimental proposal
 
 - Defined five interaction kinds for people and their agents.

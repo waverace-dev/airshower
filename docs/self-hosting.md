@@ -2,6 +2,27 @@
 
 This guide runs the experimental reference implementation. It does not establish production safety or live desktop compatibility. Python 3.9+ is sufficient; runtime dependencies are all in the standard library.
 
+Authenticated browser approvals additionally require a Python runtime with `hashlib.scrypt`, normally an OpenSSL-enabled Python build. The system Python 3.9 on the test Mac lacks it; an available Python 3.12 build supports it. Enrollment with an approval password fails closed when the runtime cannot hash it. These operator requirements do not apply to the person installing the Claude Desktop extension.
+
+## Agent-assisted operator setup
+
+The following are operator/developer commands. The normal desktop user follows [desktop setup](desktop-setup.md), without Terminal.
+
+```sh
+python3 -m airshower ready --name Avery --agent "Avery desktop"
+python3 -m airshower serve --profile "/absolute/private/profile" --public-url https://relay.example.net
+python3 -m airshower invite --profile "/absolute/private/profile" --public-url https://relay.example.net --output /private/new-invitation.json
+python3 -m airshower doctor --profile "/absolute/private/profile"
+```
+
+`ready` returns the actual private profile path. Its local relay address defaults to `http://127.0.0.1:7340`. It provisions identities and token-free host templates without starting a service or editing the user's existing app configuration. Repeating the same setup preserves identities; conflicting or ambiguous setup state fails instead of silently overwriting it. `doctor` verifies connectivity and identity separately from host delivery and a real peer exchange.
+
+Configure and verify an HTTPS reverse proxy before using the public URL. The browser approval feature is enabled only with `serve --public-url`; the proxy must preserve the exact public Host header. Do not trust an arbitrary forwarded Host or enable a wildcard Origin. The Python listener itself still has no TLS.
+
+`invite` writes an expiring enrollment capability and a separate contact invitation into a new private file. Share that file privately with the intended person. They choose their own approval password through Claude's sensitive extension settings. The relay stores a salted scrypt hash, never that password. There is deliberately no owner-token password-reset API in this preview. Losing the password requires operator recovery planning; it must not silently broaden an agent's authority.
+
+Local operator profiles do not automatically have a browser-approval password. A URL-only desktop client should enroll a separate person/agent profile through an invitation with a user-chosen password. Keep the operator's admin token out of all desktop tool configuration.
+
 ## Start locally
 
 From the checkout, create a private data directory and bootstrap token without printing the token:
@@ -45,7 +66,7 @@ print('Private owner and agent records saved under .airshower/.')
 PY
 ```
 
-Provision a separate owner and agent for each person. Share each person's credentials through a secure channel, not public chat. There is no self-service signup, invite UI, account recovery or token rotation API yet. Do not configure the MCP adapter with an owner token; it rejects that role.
+Provision a separate owner and agent for each person. The desktop enrollment flow issues credentials directly to the recipient after they redeem a single-use invitation. Manual credentials still need a secure channel, not public chat. There is no public self-service signup, account recovery or token rotation API. Do not configure the base MCP adapter with an owner token; it rejects that role.
 
 Each receiver approves the sender's owner ID using `POST /v1/contacts`. Contacts are directional. Owners publish exact sources, then approve requests or create grants. See the [reference API](specification.md#6-http-reference-interface) and [complete executable example](../examples/quickstart.py).
 
@@ -75,7 +96,7 @@ relay.example.net {
 
 This is configuration guidance, not an installer. Configure connection/body/rate limits, protect the bootstrap route, and ensure the proxy streams SSE without buffering and does not log Authorization headers. Clients require HTTPS for non-loopback destinations and refuse redirects carrying credentials. Do not expose a bare HTTP listener to the internet.
 
-Browser-origin requests are rejected by the reference service. A future approval web app needs its own carefully scoped authentication design; simply enabling permissive CORS is not an integration plan.
+Browser-origin requests remain rejected by the JSON API. The separate `/consent/` HTML routes use a configured HTTPS origin, an owner approval password, path-scoped secure cookies, CSRF protection, short expiry, and a second explicit decision after login. Their URLs contain public request identifiers rather than bearer credentials. Opening a review URL or returning `accept` from URL elicitation does not approve the underlying request.
 
 The relay operator can read stored request text and published sources. TLS protects transport; it is not end-to-end encryption. Review the [threat model](threat-model.md) and conduct a deployment review before using real personal data.
 

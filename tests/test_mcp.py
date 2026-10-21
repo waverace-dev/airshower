@@ -71,7 +71,7 @@ class MCPProtocolTests(unittest.TestCase):
         result = initialize(self.server, "request-1", version="2099-01-01")
         self.assertEqual(result["id"], "request-1")
         self.assertEqual(result["result"]["protocolVersion"], "2025-11-25")
-        self.assertEqual(result["result"]["serverInfo"]["version"], "0.1.0")
+        self.assertEqual(result["result"]["serverInfo"]["version"], "0.2.0")
         self.assertEqual(result["result"]["capabilities"], {"tools": {"listChanged": False}})
         listing = self.server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         self.assertEqual(len(listing["result"]["tools"]), 9)

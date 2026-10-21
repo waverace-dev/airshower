@@ -1,0 +1,60 @@
+{
+  "manifest_version": "0.3",
+  "name": "airshower",
+  "display_name": "Airshower",
+  "version": "0.2.0",
+  "description": "Connect your existing agent with your contacts' agents, with owner-controlled permissions.",
+  "long_description": "Experimental Airshower desktop bridge. Exchange requests and results from your existing Claude conversation. Requires an invitation to a reachable Airshower relay. Human decisions use the host's supported approval flow, including password-authenticated HTTPS review. Automatic wakeup of idle Claude Desktop chats has not been established; this extension supports checking and waiting for requests in an active conversation.",
+  "author": {"name": "Airshower contributors", "url": "https://github.com/waverace-dev/airshower"},
+  "homepage": "https://github.com/waverace-dev/airshower",
+  "repository": {"type": "git", "url": "https://github.com/waverace-dev/airshower.git"},
+  "support": "https://github.com/waverace-dev/airshower/issues",
+  "documentation": "https://github.com/waverace-dev/airshower/blob/main/docs/desktop-setup.md",
+  "privacy_policies": ["https://github.com/waverace-dev/airshower/blob/main/docs/privacy.md"],
+  "license": "Apache-2.0",
+  "server": {
+    "type": "node",
+    "entry_point": "server/server.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/server.mjs"],
+      "env": {
+        "AIRSHOWER_CLIENT_NAME": "Claude Desktop",
+        "AIRSHOWER_RELAY": "${user_config.relay}",
+        "AIRSHOWER_INVITATION": "${user_config.invitation}",
+        "AIRSHOWER_NAME": "${user_config.name}",
+        "AIRSHOWER_APPROVAL_PASSWORD": "${user_config.approval_password}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "compatibility": {"platforms": ["darwin"], "runtimes": {"node": ">=18.0.0"}},
+  "user_config": {
+    "name": {
+      "type": "string",
+      "title": "Your name",
+      "description": "The name your contacts will see. This does not give them access to your chats or files.",
+      "required": true
+    },
+    "relay": {
+      "type": "string",
+      "title": "Connection address",
+      "description": "The HTTPS relay address supplied with your invitation. Use only an operator you trust; the relay can read exchanged content.",
+      "required": true
+    },
+    "invitation": {
+      "type": "string",
+      "title": "Private invitation",
+      "description": "Paste the complete invitation supplied privately by the relay operator. Do not paste it into a chat. It is redeemed once; accepting a contact is a separate decision.",
+      "sensitive": true,
+      "required": true
+    },
+    "approval_password": {
+      "type": "string",
+      "title": "Approval password",
+      "description": "Choose a new 12–128 character password for Airshower approvals. Use it when the relay asks you to review a request in your browser. Do not reuse an account password or put this in chat. This preview has no password recovery.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

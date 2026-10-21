@@ -13,7 +13,8 @@ from .client import AirshowerError, Client, TransportError
 
 
 def _secret_file(filename):
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    # Reject named pipes with fstat without blocking while waiting for a writer.
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | os.O_NONBLOCK
     descriptor = os.open(filename, flags)
     with os.fdopen(descriptor, "r", encoding="utf-8") as stream:
         info = os.fstat(stream.fileno())
@@ -54,11 +55,20 @@ def _serve(args):
     from .server import create_server
     from .store import Store
 
-    token = _secret_file(args.admin_token_file) if args.admin_token_file else _environment_token("AIRSHOWER_ADMIN_TOKEN")
-    store = Store(_private_database(args.db), token)
+    if args.profile:
+        from .setup import load_profile
+        profile = load_profile(args.profile)
+        if profile["mode"] != "local":
+            raise ValueError("This profile joins a remote relay; it does not host one")
+        token = _secret_file(profile["admin_token_file"])
+        database = profile["database"]
+    else:
+        token = _secret_file(args.admin_token_file) if args.admin_token_file else _environment_token("AIRSHOWER_ADMIN_TOKEN")
+        database = args.db
+    store = Store(_private_database(database), token)
     server = None
     try:
-        server = create_server(store, host=args.host, port=args.port)
+        server = create_server(store, host=args.host, port=args.port, public_url=args.public_url)
         print("Airshower experimental reference server listening on {}:{}".format(*server.server_address[:2]), flush=True)
         print("Internet deployment requires an HTTPS reverse proxy. This server does not provide TLS or end-to-end encryption.", file=sys.stderr)
         try:
@@ -197,9 +207,71 @@ def _watch(args):
 
 
 def _mcp(args):
+    if args.profile:
+        from .host import run_stdio
+        return run_stdio(args.profile, channel=args.channel) or 0
+    if args.channel:
+        raise ValueError("Channel mode requires a private --profile")
     from .mcp import run_stdio
 
     return run_stdio() or 0
+
+
+def _default_state_dir():
+    if sys.platform == "darwin":
+        return str(Path.home() / "Library" / "Application Support" / "Airshower" / "operator")
+    return str(Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))) / "airshower" / "operator")
+
+
+def _ready(args):
+    from .setup import ready
+    result = ready(args.state_dir, args.name, args.agent, relay=args.relay,
+                   enrollment_file=args.enrollment_file)
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+def _doctor(args):
+    from .setup import doctor
+    print(json.dumps(doctor(args.profile), indent=2, sort_keys=True))
+    return 0
+
+
+def _invite(args):
+    """Operator-only: issue two scoped, expiring capabilities into a new file."""
+    from .setup import load_profile, owner_client
+    profile = load_profile(args.profile)
+    if profile["mode"] != "local":
+        raise ValueError("Only a relay operator can issue enrollment invitations")
+    relay = args.public_url or profile["relay"]
+    # Validate before reading or transmitting any credentials. Client permits
+    # loopback HTTP for local tests and requires HTTPS for remote endpoints.
+    Client(relay, "validation-only")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(args.output, flags, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+        admin = Client(profile["relay"], _secret_file(profile["admin_token_file"]))
+        enrollment = admin.post("/v1/enrollments", {"expires_in": args.expires_in})
+        invitation = {"relay": relay, "token": enrollment["token"],
+                      "expires_at": enrollment["expires_at"]}
+        # Persist enrollment before the second API call so a failure cannot
+        # discard its sole copy. Pairing remains a separate recipient decision.
+        json.dump(invitation, stream)
+        stream.flush()
+        os.fsync(stream.fileno())
+        contact = owner_client(args.profile).post("/v1/contact-invites", {"expires_in": args.expires_in})
+        invitation["contact_invite"] = contact["token"]
+        stream.seek(0)
+        json.dump(invitation, stream)
+        stream.write("\n")
+        stream.truncate()
+        stream.flush()
+        os.fsync(stream.fileno())
+    print(json.dumps({"invitation_file": str(Path(args.output).absolute()),
+                      "expires_at": invitation["expires_at"],
+                      "contains_secrets": True,
+                      "note": "Share privately with the intended person. Accepting contact still requires their decision."}, indent=2))
+    return 0
 
 
 def _a2a(args):
@@ -229,6 +301,8 @@ def parser():
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=7340)
     serve.add_argument("--admin-token-file", help="Private 0600 token file; otherwise reads AIRSHOWER_ADMIN_TOKEN")
+    serve.add_argument("--profile", help="Private local operator profile created by ready")
+    serve.add_argument("--public-url", help="Verified HTTPS origin of the reverse proxy; enables authenticated browser approvals")
     serve.set_defaults(run=_serve)
 
     demo = commands.add_parser("demo", help="Run a temporary, fictional local end-to-end demonstration")
@@ -249,7 +323,28 @@ def parser():
     watch.set_defaults(run=_watch)
 
     mcp = commands.add_parser("mcp", help="Run the MCP stdio adapter using AIRSHOWER_URL and AIRSHOWER_TOKEN")
+    mcp.add_argument("--profile", help="Private profile directory; credentials stay out of host configuration")
+    mcp.add_argument("--channel", action="store_true", help="Experimental Claude Code channel; not Claude Desktop wakeup")
     mcp.set_defaults(run=_mcp)
+
+    ready = commands.add_parser("ready", help="Prepare a private profile and host configuration; does not install or claim live readiness")
+    ready.add_argument("--state-dir", default=_default_state_dir())
+    ready.add_argument("--name", required=True, help="Owner display name")
+    ready.add_argument("--agent", default="Desktop agent", help="Agent display name")
+    ready.add_argument("--relay", help="Existing HTTPS relay origin for remote enrollment")
+    ready.add_argument("--enrollment-file", help="Private invitation JSON file")
+    ready.set_defaults(run=_ready)
+
+    doctor = commands.add_parser("doctor", help="Report separately what is configured, reachable, and unverified")
+    doctor.add_argument("--profile", default=_default_state_dir())
+    doctor.set_defaults(run=_doctor)
+
+    invite = commands.add_parser("invite", help="Operator: save a single-use enrollment and contact invitation privately")
+    invite.add_argument("--profile", default=_default_state_dir())
+    invite.add_argument("--public-url", help="Verified HTTPS address of this same relay for the invitee")
+    invite.add_argument("--expires-in", type=int, default=3600)
+    invite.add_argument("--output", required=True, help="New private invitation file; never overwrite")
+    invite.set_defaults(run=_invite)
 
     a2a = commands.add_parser("a2a", help="Run the experimental A2A compatibility facade")
     a2a.add_argument("--backend", required=True, help="Airshower backend base URL")

@@ -14,6 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from . import __version__
 
 EXTENSION_URI = (
     "https://github.com/waverace-dev/airshower/blob/main/docs/specification.md#v0.1"
@@ -247,7 +248,7 @@ def create_a2a_server(backend_url, recipient_agent_id, public_url, host="127.0.0
     card = {
         "name": "Airshower " + recipient_agent_id,
         "description": "Experimental consent-aware request facade. A2A 1.0 subset only.",
-        "version": "0.1.0", "documentationUrl":
+        "version": __version__, "documentationUrl":
             "https://github.com/waverace-dev/airshower/blob/main/docs/a2a.md",
         "supportedInterfaces": [{"url": public_url, "protocolBinding": "HTTP+JSON",
                                  "protocolVersion": "1.0"}],

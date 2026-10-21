@@ -18,6 +18,6 @@
       <text x="480" y="53" fill="#9cb7bd" font-size="12">Human answers · agent assistance</text>
     </g>
     <rect x="928" y="56" width="208" height="36" rx="18" fill="#a6f3d4" fill-opacity=".1" stroke="#a6f3d4" stroke-opacity=".3"/>
-    <text x="950" y="79" fill="#a6f3d4" font-size="13">v0.1 · EXPERIMENTAL</text>
+    <text x="950" y="79" fill="#a6f3d4" font-size="13">v0.2 · EXPERIMENTAL</text>
   </g>
 </svg>

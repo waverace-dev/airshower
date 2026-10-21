@@ -12,6 +12,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, urlsplit
 
+from . import __version__
 from .errors import APIError, invalid, missing
 
 MAX_BODY_BYTES = 7 * 1024 * 1024 + 65536
@@ -39,8 +40,12 @@ class AirshowerServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-    def __init__(self, address, handler, store):
+    def __init__(self, address, handler, store, public_url=None):
         self.store = store
+        self.consent = None
+        if public_url is not None:
+            from .consent import ConsentBroker
+            self.consent = ConsentBroker(store, public_url)
         self.stopping = threading.Event()
         super().__init__(address, handler)
 
@@ -200,14 +205,27 @@ class Handler(BaseHTTPRequestHandler):
         streaming = False
         try:
             path, query = self._location()
+            if path.startswith("/consent/") and self.server.consent is not None:
+                return self.server.consent.handle_public(self, path)
             # Cross-origin/browser cookie authentication is deliberately absent.
             if self.headers.get("Origin") is not None:
                 raise APIError(403, "forbidden", "Browser-origin requests are not enabled.")
             data = self._body()
             if path == "/health" and self.command == "GET":
-                return self._respond(200, {"ok": True, "version": "0.1.0", "protocol": "airshower/0.1"})
+                return self._respond(200, {"ok": True, "version": __version__, "protocol": "airshower/0.1"})
             token = self._token()
+            if path == "/v1/enroll" and self.command == "POST":
+                status, value = self.server.store.enroll(token, data)
+                return self._respond(status, value)
             actor = self.server.store.authenticate(token)
+            if self.server.consent is not None:
+                if path == "/v1/consents" and self.command == "POST":
+                    return self._respond(201, self.server.consent.create(actor, data))
+                if path.startswith("/v1/consents/") and path.endswith("/cancel") and self.command == "POST":
+                    identifier = path[len("/v1/consents/"):-len("/cancel")]
+                    return self._respond(200, self.server.consent.cancel(actor, identifier, data))
+                if path.startswith("/v1/consents/") and self.command == "GET":
+                    return self._respond(200, self.server.consent.status(actor, path[len("/v1/consents/"):]))
             if path in ("/v1/events", "/v1/events/history") and self.command == "GET":
                 after = self._after(query)
                 if path.endswith("/history"):
@@ -260,6 +278,6 @@ class Handler(BaseHTTPRequestHandler):
     do_HEAD = do_OPTIONS
 
 
-def create_server(store, host="127.0.0.1", port=0):
+def create_server(store, host="127.0.0.1", port=0, public_url=None):
     """Create a server; the caller owns serve_forever, shutdown and Store.close."""
-    return AirshowerServer((host, port), Handler, store)
+    return AirshowerServer((host, port), Handler, store, public_url)

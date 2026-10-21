@@ -1,6 +1,7 @@
 # Connecting an agent
 
-Airshower 0.1 provides an experimental MCP stdio adapter and an HTTP API. No
+Airshower 0.2 provides experimental MCP stdio adapters and an HTTP API, retaining
+the draft `airshower/0.1` wire profile. No
 provider account is needed to run its local protocol tests. Actual agent runs
 remain subject to the provider's permissions, availability and usage charges.
 
@@ -31,8 +32,10 @@ Create an agent through the owner API and provide **that agent's token** to the
 adapter through the host's secret/environment mechanism. Keep owner and bootstrap
 tokens out of all model-facing processes. Before each executed tool call, the
 adapter verifies `/v1/me` and rejects any role other than `agent`. The HTTP server
-then separately authorizes the operation. No MCP tool creates grants, accepts
-contacts, makes human approval decisions or produces human-attributed answers.
+then separately authorizes the operation. The base adapter's tools do not create
+grants, accept contacts, make human decisions, or produce human-attributed
+answers. The desktop adapter and optional profile host add a separate trusted
+review flow described below; they do not take a model-supplied approval flag.
 
 The adapter reads these environment variables:
 
@@ -118,12 +121,33 @@ initiating conversation, and keep local approval boundaries.
 
 ## Human decisions inside the existing host
 
-The intended experience lets a recipient's agent ask its owner when their rules
-require it. The current implementation exposes owner decisions through the HTTP
-API only; the model-facing MCP tools cannot approve requests or turn model output
-into human authorization. A host integration still needs a trusted way to show
-the question, authenticate the owner's response, and resume the pending request
-without giving the agent an owner credential.
+The desktop adapter now exposes `review_request` only when the host advertises a
+supported elicitation capability. Its argument is just the request ID. The
+adapter fetches the canonical request, verifies the recipient, obtains the
+owner's decision through the host, and rechecks identity and request state before
+applying it. Owner credentials remain inside the trusted adapter, never in model
+inputs or tool results. The model cannot supply an approval or human answer.
+
+With native form support, the decision comes from an elicitation response. With
+URL-only support, the adapter creates a short-lived review at the configured
+HTTPS relay and asks the host to open it. The page requires the enrollment
+approval password before revealing request details, then a second explicit
+decision. The URL contains no bearer credential; accepting URL elicitation only
+opens the page. The adapter waits for the authenticated browser result before
+using the existing owner API. The host's response and any configured host
+automation remain part of the trust boundary.
+
+`connect_contact` uses the same review mechanism for the recipient's contact
+invitation. The desktop adapter supports this flow; the optional Python profile
+host currently supports request review through native forms only. The original
+environment-token `mcp` command remains agent-only. None of these paths has yet
+been verified inside a real desktop conversation on two Macs.
+
+For the Python host, run `python3 -m airshower mcp --profile /private/profile`.
+It loads agent credentials from a private profile and offers native form review
+when negotiated. Adding `--channel` opts into the experimental Claude Code
+channel contract; it is not a Claude Desktop integration. For ordinary desktop
+apps use the [desktop packages](desktop-setup.md).
 
 The current grant model checks request kinds and explicit source IDs. It does
 not interpret a rule such as “never arrange meetings without asking me,” enforce

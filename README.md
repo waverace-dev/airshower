@@ -10,7 +10,15 @@ Airshower is an open proposal for an invisible bridge that gives existing agents
 > “Ask their agent what changed in the project.”<br>
 > “Have our agents coordinate a review, and involve us when needed.”
 
-**Status: experimental v0.1 proposal and reference implementation.** Airshower is not an adopted standard. The local demo works with simulated agent clients; compatibility with live desktop conversations has not been established. See [what works](#what-works-today) before integrating it.
+**Status: experimental protocol proposal and desktop preview.** Airshower is not an adopted standard. The local demo and integration tests use simulated agent hosts; compatibility with live desktop conversations has not been established. See [what works](#what-works-today) before integrating it.
+
+## Get Airshower ready
+
+Tell an agent: **“Get me Airshower ready from https://github.com/waverace-dev/airshower. Follow INSTALL.md.”**
+
+The [setup entrypoint](INSTALL.md) describes the normal desktop path: a Claude Desktop extension and a Codex plugin with an onboarding skill. Both use the same dependency-free desktop adapter. People using Claude Desktop do not need a terminal or developer runtime installation. A shared HTTPS relay and a private invitation are still required; this project does not operate a public relay.
+
+**The desktop packages are previews.** Protocol tests cover enrollment, consent, and request/reply across separate adapter processes. They do not establish installation in the real apps or automatic wakeup of idle desktop chats. [Desktop setup and current limits](docs/desktop-setup.md).
 
 ## The experience we are building toward
 
@@ -55,14 +63,17 @@ The reference implementation uses **curated context excerpts and explicitly uplo
 
 ## What works today
 
-| Capability | v0.1 status |
+| Capability | Current status |
 | --- | --- |
 | Separate owner and agent identities | Implemented with distinct bearer credentials and server authorization. |
+| Adding another person | Expiring, single-use enrollment and contact invitations; bilateral contact acceptance does not grant execution or source access. |
 | Contacts, scoped grants, approval, expiry and revocation | Reference implementation, covered by tests. |
 | Human answers and agent answers | Attributed by authenticated role, not client-supplied labels. |
 | Context and file requests | Explicit sources, protected downloads, integrity checks. |
 | Immediate events and reconnect replay | Durable SQLite event log and authenticated Server-Sent Events. |
 | Existing assistant tools | MCP stdio adapter, explicitly pinned to revision `2025-11-25`; protocol tests, not host certification. |
+| Desktop packaging | Claude `.mcpb` and portable Codex plugin builder; shared dependency-free Node adapter and setup skill. Actual desktop installation remains unverified. |
+| Human review through the host | Capability-negotiated forms or authenticated HTTPS review pages for URL-only hosts; tested with simulated hosts, not yet a person in the desktop apps. |
 | A2A interoperability | Optional A2A 1.0 HTTP+JSON facade with an enumerated subset; [scope and limitations](docs/a2a.md). |
 | Existing desktop conversation wake-up | **Not implemented or verified.** MCP tool availability does not wake a chat. |
 | Automatic chat access, local file discovery | **Not implemented.** Source connectors are future work. |
@@ -83,18 +94,21 @@ flowchart LR
     BP --> R
 ```
 
-This shows the intended experience. In-host delivery, conversation routing, and
-trusted approval integration are still unimplemented.
+This shows the intended experience. Active-chat tools and approval flows are
+implemented as a preview; automatic conversation routing and idle-chat wakeup
+remain unimplemented. The real desktop apps still need verification.
 
 **A2A** supplies an existing language for exchanging agent tasks. **MCP** supplies tools that an assistant can call. Airshower explores the ownership, permission, attribution, and handoff behavior around those interactions. The custom reference API is deliberately separated from the [A2A adapter](docs/a2a.md); an Airshower endpoint is not automatically an A2A endpoint.
 
 ## Read and build
 
 - [Specification and permission model](docs/specification.md)
+- [Get Airshower ready](INSTALL.md) and [desktop setup](docs/desktop-setup.md)
 - [Protocol decision log](docs/decisions.md)
 - [MCP setup and integration boundaries](docs/integrations.md)
 - [A2A mapping and supported methods](docs/a2a.md)
 - [Run your own relay](docs/self-hosting.md)
+- [Peer-to-peer transport proposal](docs/peer-to-peer.md)
 - [Threat model](docs/threat-model.md) and [security reporting](SECURITY.md)
 - [Existing projects and what we still need to learn](docs/landscape.md)
 - [Roadmap and adoption criteria](docs/roadmap.md)

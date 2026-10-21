@@ -97,10 +97,23 @@ class Store:
           id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES owners(id),
           name TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE
         );
+        CREATE TABLE IF NOT EXISTS owner_consent_credentials (
+          owner_id TEXT PRIMARY KEY NOT NULL REFERENCES owners(id),
+          salt BLOB NOT NULL, password_hash BLOB NOT NULL,
+          failed_attempts INTEGER NOT NULL DEFAULT 0,
+          blocked_until REAL NOT NULL DEFAULT 0
+        );
         CREATE TABLE IF NOT EXISTS contacts (
           receiver_owner_id TEXT NOT NULL REFERENCES owners(id),
           sender_owner_id TEXT NOT NULL REFERENCES owners(id),
           PRIMARY KEY(receiver_owner_id, sender_owner_id)
+        );
+        CREATE TABLE IF NOT EXISTS enrollments (
+          token_hash TEXT PRIMARY KEY, expires_at REAL NOT NULL, consumed_at REAL
+        );
+        CREATE TABLE IF NOT EXISTS contact_invites (
+          token_hash TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES owners(id),
+          expires_at REAL NOT NULL, consumed_at REAL
         );
         CREATE TABLE IF NOT EXISTS sources (
           id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES owners(id),
@@ -286,10 +299,115 @@ class Store:
             self.condition.notify_all()
             return result
 
+    @staticmethod
+    def _invite_expiry(data):
+        _fields(data, {"expires_in"})
+        lifetime = data.get("expires_in", 3600)
+        if isinstance(lifetime, bool) or not isinstance(lifetime, int) or not 1 <= lifetime <= 86400:
+            raise invalid("expires_in must be an integer from 1 to 86400 seconds.")
+        return time.time() + lifetime
+
+    @staticmethod
+    def _invite_hash(token):
+        # These credentials are generated here, never user-selected identifiers.
+        # Reject malformed values before hashing and never include them in errors.
+        if not isinstance(token, str) or not re.fullmatch(r"[A-Za-z0-9_-]{43}", token):
+            return None
+        return _hash(token)
+
+    def enroll(self, token, data):
+        """Consume an enrollment credential and issue one owner plus one agent.
+
+        Only hashes are retained. A lost success response cannot be replayed to
+        recover these credentials; an operator must arrange a new enrollment.
+        """
+        _fields(data, {"name", "agent_name", "consent_secret"}, {"name", "agent_name"})
+        name = _text(data["name"], "name", 160)
+        agent_name = _text(data["agent_name"], "agent_name", 160)
+        consent_secret = None
+        if "consent_secret" in data:
+            consent_secret = _text(data["consent_secret"], "consent_secret", 512)
+            if not 12 <= len(consent_secret) <= 128:
+                raise invalid("consent_secret must contain 12 to 128 characters and at most 512 UTF-8 bytes.")
+            if not callable(getattr(hashlib, "scrypt", None)):
+                raise APIError(503, "consent_unavailable", "This relay runtime does not support secure approval-password storage.")
+        digest = self._invite_hash(token)
+        with self.condition:
+            if self.closed:
+                raise APIError(503, "unavailable", "The store is closed.")
+            try:
+                # Wait for any other database writer before checking expiry.
+                self.db.execute("BEGIN IMMEDIATE")
+                now = time.time()
+                # Consume in the same transaction as provisioning. The
+                # conditional write additionally prevents accidental reuse.
+                consumed = self.db.execute("""UPDATE enrollments SET consumed_at=?
+                    WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?""", (now, digest, now))
+                if not consumed.rowcount:
+                    raise APIError(401, "unauthorized", "A valid unused enrollment token is required.")
+                owner_id, owner_token = _id(), secrets.token_urlsafe(32)
+                agent_id, agent_token = _id(), secrets.token_urlsafe(32)
+                self.db.execute("INSERT INTO owners(id,name,token_hash) VALUES(?,?,?)",
+                                (owner_id, name, _hash(owner_token)))
+                self.db.execute("INSERT INTO agents(id,owner_id,name,token_hash) VALUES(?,?,?,?)",
+                                (agent_id, owner_id, agent_name, _hash(agent_token)))
+                if consent_secret is not None:
+                    # This browser-approval password is enrollment-only. Owner
+                    # API tokens cannot create or replace it after enrollment.
+                    salt = secrets.token_bytes(16)
+                    password_hash = hashlib.scrypt(consent_secret.encode("utf-8"), salt=salt,
+                                                   n=16384, r=8, p=1, dklen=32)
+                    self.db.execute("""INSERT INTO owner_consent_credentials(owner_id,salt,password_hash)
+                        VALUES(?,?,?)""", (owner_id, salt, password_hash))
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
+                raise
+            self.condition.notify_all()
+            return 201, {
+                "owner": {"id": owner_id, "name": name, "token": owner_token},
+                "agent": {"id": agent_id, "owner_id": owner_id, "name": agent_name, "token": agent_token},
+            }
+
     def _dispatch(self, method, path, actor, data):
         parts = path.strip("/").split("/")
         if path == "/v1/me" and method == "GET":
             return 200, actor
+        if path == "/v1/enrollments" and method == "POST":
+            self._role(actor, "admin")
+            expires_at = self._invite_expiry(data)
+            token = secrets.token_urlsafe(32)
+            self.db.execute("INSERT INTO enrollments(token_hash,expires_at) VALUES(?,?)", (_hash(token), expires_at))
+            return 201, {"token": token, "expires_at": expires_at}
+        if path == "/v1/contact-invites" and method == "POST":
+            self._role(actor, "owner")
+            expires_at = self._invite_expiry(data)
+            token = secrets.token_urlsafe(32)
+            self.db.execute("INSERT INTO contact_invites(token_hash,owner_id,expires_at) VALUES(?,?,?)",
+                            (_hash(token), actor["id"], expires_at))
+            return 201, {"token": token, "expires_at": expires_at, "owner_id": actor["id"]}
+        if path == "/v1/contact-invites/accept" and method == "POST":
+            self._role(actor, "owner")
+            _fields(data, {"token"}, {"token"})
+            digest = self._invite_hash(data["token"])
+            self.db.execute("BEGIN IMMEDIATE")
+            now = time.time()
+            invite = self.db.execute("""SELECT owner_id FROM contact_invites
+                WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?""", (digest, now)).fetchone()
+            if invite is None:
+                raise missing()
+            if invite["owner_id"] == actor["id"]:
+                raise invalid("An owner cannot accept their own contact invite.")
+            consumed = self.db.execute("""UPDATE contact_invites SET consumed_at=?
+                WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?""", (now, digest, now))
+            if not consumed.rowcount:
+                raise missing()
+            # Issuing the invite consents to the accepting owner; acceptance
+            # consents in the opposite direction. Neither grants source access.
+            for receiver, sender in ((actor["id"], invite["owner_id"]), (invite["owner_id"], actor["id"])):
+                self.db.execute("INSERT OR IGNORE INTO contacts(receiver_owner_id,sender_owner_id) VALUES(?,?)",
+                                (receiver, sender))
+            return 200, {"owner_id": invite["owner_id"], "connected": True}
         if path == "/v1/owners" and method == "POST":
             self._role(actor, "admin")
             _fields(data, {"name"}, {"name"})

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "airshower": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/server/server.mjs"],
+      "cwd": "${PLUGIN_ROOT}",
+      "env": {
+        "AIRSHOWER_CLIENT_NAME": "Codex"
+      }
+    }
+  }
+}

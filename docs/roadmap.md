@@ -11,7 +11,9 @@ The goal is an invisible capability inside the agents people already use: expres
 
 ## Next: existing agent chats on two Macs
 
-Start on Macs so the first users can test the complete experience on their own computers. Keep the bridge core portable; an Omarchy/Linux integration follows once the Mac flow works. First validate one complete flow with Codex and Claude Code, then Antigravity. Desktop Claude, Claude Code CLI, Codex Desktop, and Codex CLI are distinct integration targets. Do not extrapolate one result to another.
+Start on Macs so the first users can test the complete experience on their own computers. Keep the bridge core portable; an Omarchy/Linux integration follows once the Mac flow works. First validate one complete flow with normal Codex desktop and Claude Desktop, then Antigravity. End users must not need a terminal. Desktop Claude, Claude Code CLI, Codex desktop, and Codex CLI are distinct integration targets. Do not extrapolate one result to another.
+
+The 0.2 preview supplies a Claude extension, a Codex plugin, private invitations, and capability-negotiated owner review. Separate adapter processes have passed request/reply tests against an HTTPS relay with simulated desktop hosts. Installing the packages in the actual apps and completing a two-Mac test remain the next evidence gates. Active-chat operation is the first milestone; background reception remains an unresolved host integration requirement.
 
 Acceptance criteria:
 
@@ -28,6 +30,10 @@ Acceptance criteria:
 - Measure event delivery and agent reaction separately; report p50/p95 and the test setup.
 
 The reference demo is not evidence for these live-host acceptance criteria.
+
+Evaluate the [peer-to-peer transport proposal](peer-to-peer.md) before choosing
+production hosting. The present shared relay is a reference implementation,
+not a requirement that every user's content pass through an Airshower service.
 
 ## Keep the bridge out of the way
 
