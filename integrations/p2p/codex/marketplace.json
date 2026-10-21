@@ -1,0 +1,10 @@
+{
+  "name": "airshower-p2p-local",
+  "interface": { "displayName": "Airshower P2P" },
+  "plugins": [{
+    "name": "airshower-p2p",
+    "source": { "source": "local", "path": "./plugins/airshower-p2p" },
+    "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+    "category": "Productivity"
+  }]
+}

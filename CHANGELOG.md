@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — experimental P2P desktop preview
+
+- Added Iroh encrypted peer transport, local endpoint identities and bilateral
+  public-card approval. No Airshower account server is required for this path.
+- Added native owner prompts, exact standing permissions, local outbox/retry,
+  restart recovery, scoped context and file handoffs with digest verification.
+- Added Apple silicon Claude/Codex packages; the Codex ZIP includes Node.
+- Added tests for real peer streams, permissions, replay, revocation, crash
+  recovery and extracted package interoperability; Mac/Linux CI passed.
+
+Actual vendor installation and the two-person/two-Mac acceptance test remain
+unverified. Idle-chat wakeup and shared multi-host routing are not implemented.
+Helpers are ad-hoc signed, not notarized. See [verification](docs/p2p-verification.md).
+The previous HTTP relay remains a separate plaintext-trusted reference path.
+
 ## 0.2.0 — experimental desktop preview
 
 - Preview 2 removes unnecessary reverse DNS from relay startup and improves cold-runner CLI test diagnostics; desktop package bytes are unchanged.

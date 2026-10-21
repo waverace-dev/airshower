@@ -12,7 +12,12 @@ const engines = [];
 const make = async label => {
   const engine = await new PeerEngine({ directory: path.join(root, label), name: 'Fictional internet test ' + label,
     timeout: 20000, retryMs: 60000, approve: async () => ({ action: 'approve' }) }).start();
-  engines.push(engine); await bounded(engine.transport.endpoint.online(), 30000); return engine;
+  engines.push(engine);
+  console.log(JSON.stringify({ stage: 'waiting_for_public_relay', fixture: label }));
+  try { await bounded(engine.transport.endpoint.online(), 90000); }
+  catch (error) { console.log(JSON.stringify({ stage: 'public_relay_unavailable', fixture: label, configured_relay: engine.transport.endpoint.addr().relayUrl() })); throw error; }
+  console.log(JSON.stringify({ stage: 'public_relay_connected', fixture: label }));
+  return engine;
 };
 try {
   const a = await make('A'); let b = await make('B');

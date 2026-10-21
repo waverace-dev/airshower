@@ -19,10 +19,17 @@ jobs:
         run: |
           python scripts/fetch_p2p_dependencies.py
           python scripts/build_p2p_native.py
+      - name: Check public relay HTTPS reachability
+        run: |
+          for region in use1-1 usw1-1 euc1-1 aps1-1; do
+            curl --max-time 12 --silent --show-error --output /dev/null --write-out "$region HTTPS %{http_code}\n" "https://$region.relay.n0.iroh.link./"
+          done
+      - name: Baseline public network fixture
+        run: node integrations/p2p/tests/internet-smoke.mjs
       - name: Require encrypted relay fallback on this disposable runner
         run: |
           # This blocks direct QUIC, including loopback, only inside this
           # disposable CI machine. Preserve DNS and TCP/HTTPS for public relays.
-          sudo iptables -I OUTPUT 1 -p udp ! --dport 53 -j REJECT
-          sudo ip6tables -I OUTPUT 1 -p udp ! --dport 53 -j REJECT
+          sudo iptables -I OUTPUT 1 -p udp ! --dport 53 -j DROP
+          sudo ip6tables -I OUTPUT 1 -p udp ! --dport 53 -j DROP
           node integrations/p2p/tests/internet-smoke.mjs --require-relay

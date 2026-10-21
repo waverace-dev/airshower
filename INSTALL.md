@@ -20,6 +20,8 @@ Get built packages from the [P2P preview release](https://github.com/waverace-de
   source-only Git directory or ask the person to type shell commands. Report
   any missing host-loading prerequisite honestly.
 
+The setup agent can follow the concrete [Codex local marketplace recipe](integrations/p2p/codex/README.md).
+
 These are previews, not vendor-directory installations. Native helpers are
 ad-hoc signed, not Apple notarized. Installation in the actual apps and a real
 two-Mac exchange still need verification. Do not bypass host security checks.
