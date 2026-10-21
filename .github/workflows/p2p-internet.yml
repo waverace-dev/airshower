@@ -28,9 +28,8 @@ jobs:
         run: node integrations/p2p/tests/internet-smoke.mjs
       - name: Require encrypted relay fallback on this disposable runner
         run: |
-          # This blocks direct QUIC, including loopback, only inside this
-          # disposable CI machine. Preserve DNS queries AND replies from the
-          # local resolver, plus TCP/HTTPS for public relays.
-          sudo iptables -I OUTPUT 1 -p udp ! --dport 53 ! --sport 53 -j DROP
-          sudo ip6tables -I OUTPUT 1 -p udp ! --dport 53 ! --sport 53 -j DROP
-          node integrations/p2p/tests/internet-smoke.mjs --require-relay
+          # Isolate packet loss to the fixture, preserving the runner's DNS,
+          # networking and control channel. No machine-wide firewall changes.
+          mkdir -p build
+          cc -shared -fPIC -O2 -Wall -Wextra -Werror integrations/p2p/tests/drop-udp.c -ldl -o build/drop-udp.so
+          LD_PRELOAD="$PWD/build/drop-udp.so" node integrations/p2p/tests/internet-smoke.mjs --require-relay
