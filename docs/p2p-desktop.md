@@ -1,6 +1,7 @@
 # Airshower P2P desktop preview
 
-Version 0.3.0 adds encrypted peer communication to your existing agent chat.
+Version 0.4.0 adds an optional background helper to Airshower's encrypted peer
+communication inside your existing agent chat.
 There is no Airshower account server, hosted approval page, or new messenger.
 This is a testable preview, not an adopted standard or certified integration.
 
@@ -10,11 +11,11 @@ The release targets **Apple silicon Macs, macOS 13.5+**. Intel, Windows and
 Omarchy desktop packages are not provided by this release.
 
 1. Get the matching package from the
-   [P2P preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.3.0-preview.1).
+   [P2P preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.4.0-preview.1).
    In Claude Desktop, use the desktop extension installer to open
-   `airshower-p2p-0.3.0-macos-arm64.mcpb`, then enter your display name. Claude
+   `airshower-p2p-0.4.0-macos-arm64.mcpb`, then enter your display name. Claude
    supplies Node. In Codex, have your setup agent load
-   `airshower-p2p-codex-0.3.0-macos-arm64.zip` through the supported local plugin
+   `airshower-p2p-codex-0.4.0-macos-arm64.zip` through the supported local plugin
    mechanism. The ZIP includes Node; the source-only Git directory is not the
    built plugin. No end-user Terminal or runtime installation is needed.
 2. Say **“Get me Airshower ready.”** Ask for your **public connection card**.
@@ -65,8 +66,10 @@ after 24 hours. An OS file lock prevents concurrent profile writers and releases
 after a crash.
 
 **Network receipt does not wake an idle normal Claude Desktop or local Codex
-chat.** Check/wait tools work during an active conversation. No model, login
-item, LaunchAgent, or background service is installed. The preview supports
+chat.** Check/wait tools work during an active conversation. The optional
+[background helper](background-agent.md) can answer permitted requests with an
+already installed subscription runtime. It does not inherit the original chat.
+No model runtime, login item, LaunchAgent, or always-on service is installed. The preview supports
 one active MCP process per app profile; other simultaneous processes fail
 closed. Codex and Claude have separate identities. A shared local daemon is
 future work.

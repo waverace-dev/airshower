@@ -33,6 +33,10 @@ runtime. See [the profile](peer-to-peer.md), [trust boundaries](p2p-desktop.md)
 and [verification](p2p-verification.md). Idle-chat wakeup and shared multi-host
 routing remain unresolved.
 
+## Background helper update (0.4)
+
+An optional hidden helper is an accepted delivery path when the original desktop chat cannot be triggered. It receives only approved request/context data, uses the owner’s installed subscription runtime, and remains controllable from the normal chat. It does not inherit arbitrary chat history or authorize external app actions. See [scope and evidence](background-agent.md).
+
 ## Open design work
 
 | Question | Needed before a broader claim |

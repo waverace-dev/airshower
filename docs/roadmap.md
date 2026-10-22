@@ -17,6 +17,8 @@ The earlier 0.2 preview supplies a Claude extension, a Codex plugin, private inv
 
 The 0.3 preview adds Iroh P2P transport, local native owner prompts, a durable outbox, and scoped file handoff. Desktop installation, the actual two-Mac exchange, shared multi-host routing, and idle-chat wakeup remain open. See [P2P verification](p2p-verification.md).
 
+The 0.4 preview adds an opt-in background helper using installed subscription runtimes. A real Codex reply triggered by encrypted P2P arrival is verified. The original desktop conversation stays idle; its history is not inherited. See [background behavior and evidence](background-agent.md).
+
 Acceptance criteria:
 
 - Invite and authenticate the second owner without exchanging AI-provider credentials.

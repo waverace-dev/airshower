@@ -13,4 +13,6 @@
 
 Do not ask people to paste private invitations or credentials into chat. Installation alone is not an end-to-end verification. This preview cannot automatically wake idle normal desktop chats.
 
-The 0.3 P2P release requires only a display name and exchanged public connection cards. Both owners approve locally. No Airshower account server is required. Apple silicon Mac packages include native helpers; the Codex ZIP includes Node. Use the built release, not the source-only plugin directory. Real desktop installation and two-Mac use remain unverified.
+The 0.4 P2P release requires only a display name and exchanged public connection cards. Both owners approve locally. No Airshower account server is required. Apple silicon Mac packages include native helpers; the Codex ZIP includes Node. Use the built release, not the source-only plugin directory. Real desktop installation and two-Mac use remain unverified.
+
+- [Optional background helper](https://github.com/waverace-dev/airshower/blob/main/docs/background-agent.md): Event-driven subscription runtime, owner approval, scoped context, usage limits and verified limitations. The original desktop chat stays idle.

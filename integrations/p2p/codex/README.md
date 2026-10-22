@@ -1,6 +1,6 @@
 # Codex local plugin setup
 
-Use the built `airshower-p2p-codex-0.3.0-macos-arm64.zip` from the release.
+Use the built `airshower-p2p-codex-0.4.0-macos-arm64.zip` from the release.
 This source directory alone is not a complete plugin. The release includes
 the adapter, native modules, owner/lock helpers and a pinned Node executable.
 

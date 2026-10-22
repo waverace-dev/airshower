@@ -26,10 +26,11 @@ def bundle(destination, entries):
 
 def build(output):
     entries = {'server/desktop/server.mjs': ROOT / 'integrations/desktop/server.mjs', 'LICENSE': ROOT / 'LICENSE',
-               'PRIVACY.md': ROOT / 'docs/p2p-desktop.md', 'THIRD_PARTY_NOTICES.md': P2P / 'THIRD_PARTY_NOTICES.md',
+               'PRIVACY.md': ROOT / 'docs/p2p-desktop.md', 'background-agent.md': ROOT / 'docs/background-agent.md',
+               'THIRD_PARTY_NOTICES.md': P2P / 'THIRD_PARTY_NOTICES.md',
                'licenses/IROH-MIT.txt': P2P / 'licenses/IROH-MIT.txt',
                'dependencies.lock.json': P2P / 'dependencies.lock.json', 'node-runtime.lock.json': P2P / 'node-runtime.lock.json'}
-    for name in ('mcp.mjs', 'engine.mjs', 'transport.mjs', 'storage.mjs', 'lease.mjs', 'owner-prompt.mjs', 'native/airshower-lock',
+    for name in ('mcp.mjs', 'engine.mjs', 'transport.mjs', 'storage.mjs', 'lease.mjs', 'owner-prompt.mjs', 'agent-runtime.mjs', 'background-agent.mjs', 'native/airshower-lock',
                  'native/Airshower Approval.app/Contents/Info.plist', 'native/Airshower Approval.app/Contents/MacOS/AirshowerApproval',
                  'native/Airshower Approval.app/Contents/_CodeSignature/CodeResources'):
         entries['server/p2p/' + name] = P2P / name

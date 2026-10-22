@@ -32,6 +32,18 @@ export class PeerEngine {
   constructor({ directory, name, mode = 'internet', bindAddr, timeout = 8000, retryMs = 2000, approve }) {
     this.options = { mode, bindAddr, timeout }; this.directory = directory; this.name = name;
     this.retryMs = retryMs; this.approve = approve; this.syncing = false; this.reviews = new Set(); this.closed = false;
+    this.listeners = new Set();
+  }
+  // Observers receive a change signal, never a permission grant or a remote
+  // instruction. They must reread and authorize current state before acting.
+  subscribe(listener) { this.listeners.add(listener); return () => this.listeners.delete(listener); }
+  notify() {
+    if (this.notificationPending) return;
+    this.notificationPending = true;
+    queueMicrotask(() => {
+      this.notificationPending = false;
+      for (const listener of this.listeners) { try { listener(); } catch { /* Delivery must survive an observer failure. */ } }
+    });
   }
   async start() {
     if (this.starting) return this.starting;
@@ -62,7 +74,7 @@ export class PeerEngine {
   incoming(id) { const row = this.requestRow(id); if (row.recipient_agent_id !== this.id) fail('wrong_recipient', 'Only this request’s recipient can handle it.'); this.contact(row.sender_agent_id); return row; }
   public(row) { return copy({ ...canonical(row), status: row.status, revision: row.revision, updated_at: row.updated_at, delivered: Boolean(row.delivered), ...(row.result ? { result: row.result, attribution: row.attribution } : {}), ...(row.cancel_requested ? { cancellation_pending: true } : {}) }); }
   snapshot(row) { const value = this.public(row); delete value.delivered; delete value.cancellation_pending; return value; }
-  changed(row) { row.revision++; row.updated_at = Date.now(); row.dirty = true; this.store.save(); }
+  changed(row) { row.revision++; row.updated_at = Date.now(); row.dirty = true; this.store.save(); this.notify(); }
   expire(row) {
     if (row.expires_at <= Date.now() && !TERMINAL.includes(row.status) && (row.recipient_agent_id === this.id || !row.delivered)) {
       row.status = 'expired'; this.changed(row);
@@ -111,7 +123,7 @@ export class PeerEngine {
         if (!TERMINAL.includes(row.status)) { row.status = 'denied'; row.revision++; row.updated_at = Date.now(); row.dirty = true; }
       } else if (row.recipient_agent_id === id && row.sender_agent_id === this.id && !TERMINAL.includes(row.status)) row.cancel_requested = true;
     }
-    this.store.save(); this.transport.disconnect(id); return { changed: true };
+    this.store.save(); this.transport.disconnect(id); this.notify(); return { changed: true };
   }
   async policy(id, kinds, sourceIds, signal) {
     const contact = this.contact(id);
@@ -119,7 +131,7 @@ export class PeerEngine {
     if (sourceIds.some(id => !this.data.sources[id]?.active || this.data.sources[id].peer_id !== contact.card.endpoint_id)) fail('source_denied', 'The selected source is not published to this contact.');
     const answer = await this.human({ kind: 'confirm', title: 'Change permissions for ' + contact.card.name + '?', detail: 'Allow your agent to handle these request kinds without asking each time: ' + (kinds.join(', ') || 'none') + '.\n\nExact sources: ' + (sourceIds.map(id => this.data.sources[id].label).join(', ') || 'none') + '.\n\nThis does not grant access to chats, other files, money, calendars, or other applications.', accept: 'Save permissions' }, signal);
     if (answer.action !== 'approve') return { changed: false };
-    this.contact(id); contact.policy = { kinds, source_ids: sourceIds }; this.store.save(); return { changed: true };
+    this.contact(id); contact.policy = { kinds, source_ids: sourceIds }; this.store.save(); this.notify(); return { changed: true };
   }
   async send(args) {
     const contact = this.contact(args.recipient_agent_id); const sourceIds = args.source_ids || [];
@@ -146,7 +158,7 @@ export class PeerEngine {
       const policy = this.contact(peerId).policy;
       const automatic = row.kind !== 'ask_human' && policy.kinds.includes(row.kind) && row.source_ids.every(id => policy.source_ids.includes(id));
       const saved = { ...copy(row), status: row.expires_at <= Date.now() ? 'expired' : row.kind === 'ask_human' ? 'waiting_human' : automatic ? 'ready' : 'pending_approval', revision: 1, updated_at: Date.now(), delivered: true, basis: automatic ? 'policy' : 'none', dirty: true };
-      this.data.requests[row.id] = saved; this.store.save(); return this.snapshot(saved);
+      this.data.requests[row.id] = saved; this.store.save(); this.notify(); return this.snapshot(saved);
     }
     if (['get', 'cancel', 'file'].includes(message.type) && fields(message, message.type === 'file' ? ['version', 'type', 'request_id', 'source_id'] : ['version', 'type', 'request_id'])) {
       const row = this.incoming(message.request_id);
@@ -180,7 +192,7 @@ export class PeerEngine {
     Object.assign(row, { status: value.status, revision: value.revision, updated_at: value.updated_at, delivered: true });
     if (value.result) { row.result = copy(value.result); row.attribution = copy(value.attribution); }
     if (TERMINAL.includes(row.status)) delete row.cancel_requested;
-    this.store.save();
+    this.store.save(); this.notify();
   }
   sync() {
     if (this.closed || !this.transport) return Promise.resolve();
@@ -235,13 +247,14 @@ export class PeerEngine {
       await this.sync(); return this.public(row);
     } finally { this.reviews.delete(id); }
   }
-  claim(id) { const row = this.incoming(id); this.permitted(row); if (row.status === 'ready') { row.status = 'working'; this.changed(row); } return this.public(row); }
+  claim(id) { if (this.backgroundRequest === id) fail('request_busy', 'The background helper is processing this request. Disable it before taking over.'); const row = this.incoming(id); this.permitted(row); if (row.status === 'ready') { row.status = 'working'; this.changed(row); } return this.public(row); }
   readSources(id) { const row = this.incoming(id); this.permitted(row); return { sources: this.sourcesFor(row).map(s => ({ ...this.sourceMeta(s), ...(s.kind === 'context' ? { content: s.content } : {}) })) }; }
   finish(row, value, sourceIds, kind) {
     row.result = { text: value, source_ids: sourceIds, attachments: sourceIds.map(id => { const { id: key, filename, size, sha256 } = this.data.sources[id]; return { id: key, filename, size, sha256 }; }) };
     row.attribution = { kind, endpoint_id: this.id }; row.status = 'completed'; this.changed(row);
   }
-  async complete(id, value, sourceIds = []) {
+  async complete(id, value, sourceIds = [], background = false) {
+    if (this.backgroundRequest === id && !background) fail('request_busy', 'The background helper is processing this request. Disable it before taking over.');
     const row = this.incoming(id); this.permitted(row);
     if (row.kind === 'ask_human' || !text(value, 16384, true) || !ids(sourceIds) || sourceIds.some(id => !row.source_ids.includes(id)) || (row.kind === 'file' ? !sourceIds.length : sourceIds.length)) fail('invalid_completion', 'Invalid result or file scope. Agents cannot provide human answers.');
     this.finish(row, value, sourceIds, 'agent'); await this.sync(); return this.public(row);
@@ -279,7 +292,7 @@ export class PeerEngine {
     const source = this.data.sources[id]; if (!source) fail('not_found', 'Source not found.');
     const answer = await this.human({ kind: 'confirm', title: 'Stop sharing ' + source.label + '?', detail: 'This blocks future source access and file downloads. Previously received copies cannot be retracted.', accept: 'Stop sharing' }, signal);
     if (answer.action !== 'approve') return { changed: false };
-    source.active = false; this.store.save(); return { changed: true };
+    source.active = false; this.store.save(); this.notify(); return { changed: true };
   }
   async download(id, sourceId) {
     const row = this.requestRow(id);
@@ -313,7 +326,7 @@ export class PeerEngine {
     return { path: filename, original_filename: expected.filename, bytes: bytes.length, sha256: expected.sha256 };
   }
   async close() {
-    this.closed = true; clearInterval(this.timer);
+    this.closed = true; clearInterval(this.timer); this.notify();
     if (this.transport) await this.transport.close();
     await this.syncPromise;
     await this.store?.close();

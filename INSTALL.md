@@ -1,6 +1,6 @@
 # Get Airshower ready
 
-Airshower adds peer communication inside your existing agent chat. The **0.3 P2P
+Airshower adds peer communication inside your existing agent chat. The **0.4 P2P
 preview** targets Apple silicon Macs, macOS 13.5+. No Airshower account server,
 enrollment invitation, approval password, or end-user Terminal is needed.
 
@@ -10,12 +10,12 @@ Tell your setup agent:
 
 ## Desktop packages
 
-Get built packages from the [P2P preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.3.0-preview.1).
+Get built packages from the [P2P preview release](https://github.com/waverace-dev/airshower/releases/tag/v0.4.0-preview.1).
 
-- **Claude Desktop:** install `airshower-p2p-0.3.0-macos-arm64.mcpb` through its
+- **Claude Desktop:** install `airshower-p2p-0.4.0-macos-arm64.mcpb` through its
   extension interface. Enter only your display name. Claude supplies Node.
 - **Codex desktop:** have your setup agent load
-  `airshower-p2p-codex-0.3.0-macos-arm64.zip` through the supported local plugin
+  `airshower-p2p-codex-0.4.0-macos-arm64.zip` through the supported local plugin
   mechanism. It includes Node and an onboarding skill. Do not substitute the
   source-only Git directory or ask the person to type shell commands. Report
   any missing host-loading prerequisite honestly.
@@ -47,9 +47,12 @@ Read [desktop setup, privacy and limits](docs/p2p-desktop.md) and
 
 **P2P receipt does not wake an idle Claude Desktop or local Codex chat.** The
 bridge receives while its process runs; active-chat tools check or wait for
-work. Both devices must overlap online. There is no offline mailbox or
-background model. Each app has its own identity; one active MCP process per
-app profile is supported in this preview.
+work. Both devices must overlap online. There is no offline mailbox. An
+[optional background helper](docs/background-agent.md) can answer permitted
+requests while the extension is running, using an already installed and signed-in
+subscription runtime. Say “Enable Airshower’s background helper using Codex”
+or “…using Claude,” then approve the native window. Each app has its own
+identity; one active MCP process per app profile is supported in this preview.
 
 ## Earlier HTTP relay preview
 

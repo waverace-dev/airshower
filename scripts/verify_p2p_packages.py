@@ -10,6 +10,7 @@ from pathlib import Path
 import select
 import subprocess
 import tempfile
+import time
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,7 +22,7 @@ class Host:
         harness.write_text('''import {P2PServer} from './server/p2p/mcp.mjs';
 import {runStdio} from './server/desktop/server.mjs';
 class Fixture extends P2PServer {
-  constructor({send}) { super({send,env:{},engineOptions:{directory:process.argv[2],name:'Fictional package fixture',mode:'local',timeout:2000,retryMs:60000,approve:async()=>({action:'approve'})}}); }
+  constructor({send}) { super({send,env:{},engineOptions:{directory:process.argv[2],name:'Fictional package fixture',mode:'local',timeout:2000,retryMs:60000,approve:async()=>({action:'approve'})},backgroundOptions:{runtime:{inspect:async provider=>({provider,version:'package fixture',binary:'/fictional/runtime'}),run:async()=>({outcome:'reply',text:'Packaged background reply'})}}}); }
 }
 runStdio(process.stdin,process.stdout,undefined,Fixture);
 ''')
@@ -100,8 +101,17 @@ def verify(directory):
             received = a.tool('get_request', request_id=request['id'])
             assert received['status'] == 'completed' and received['result']['text'] == 'Package roundtrip verified'
             assert received['attribution'] == {'kind': 'agent', 'endpoint_id': bb['endpoint_id']}
+            b.tool('enable_background_agent', provider='codex')
+            automatic = a.tool('request', recipient_agent_id=bb['endpoint_id'], kind='message', message='Harmless background fixture', idempotency_key='background-package-test')
+            deadline = time.monotonic() + 10
+            while automatic['status'] != 'completed' and time.monotonic() < deadline:
+                time.sleep(0.05)
+                automatic = a.tool('get_request', request_id=automatic['id'])
+            assert automatic['status'] == 'completed' and automatic['result']['text'] == 'Packaged background reply'
+            assert b.tool('disable_background_agent')['enabled'] is False
             print(json.dumps({'archive_integrity': 'passed', 'native_signature_integrity': 'passed',
                               'bundled_node': version, 'two_process_packaged_mcp_roundtrip': 'passed',
+                              'packaged_idle_helper_fixture': 'passed',
                               'real_desktop_installation': False, 'two_physical_macs': False}))
         finally:
             for host in hosts:

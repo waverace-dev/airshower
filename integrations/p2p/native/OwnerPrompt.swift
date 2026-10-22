@@ -9,7 +9,7 @@ func finish(_ value: [String: String]) -> Never {
     exit(0)
 }
 if CommandLine.arguments == [CommandLine.arguments[0], "--version"] {
-    print("Airshower owner prompt 0.3.0")
+    print("Airshower owner prompt 0.4.0")
     exit(0)
 }
 var input = Data()

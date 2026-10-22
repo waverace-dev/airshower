@@ -55,6 +55,10 @@ request/reply and restart, plus a positive discarded-datagram count. A successfu
 connection alone does not prove relay fallback. A native-helper `--version`
 check proves executable integrity, not interactive UI quality or installation.
 
+## Background helper, 2026-10-22
+
+A real Codex subscription run responded to an incoming encrypted local peer request from an idle helper in approximately 5.5 seconds, without a recipient inbox call. Claude’s runtime logged in and launched, but its provider returned a usage-limit error; a successful Claude model response remains unverified. See [background verification and bounds](background-agent.md).
+
 ## Not verified
 
 - Installation/loading in real Claude Desktop and Codex through vendor UI.

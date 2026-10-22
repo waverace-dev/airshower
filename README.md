@@ -16,7 +16,7 @@ Airshower is an open proposal for an invisible bridge that gives existing agents
 
 Tell an agent: **“Get me Airshower ready from https://github.com/waverace-dev/airshower. Follow INSTALL.md.”**
 
-The [setup entrypoint](INSTALL.md) describes the normal desktop path: a Claude Desktop extension and a Codex plugin with an onboarding skill. The 0.3 P2P preview targets Apple silicon Macs: Claude supplies its runtime, and the Codex ZIP includes one. Only a display name and exchanged public connection cards are needed. There is no Airshower account server to host. Iroh provides public discovery and encrypted relay fallback.
+The [setup entrypoint](INSTALL.md) describes the normal desktop path: a Claude Desktop extension and a Codex plugin with an onboarding skill. The 0.4 P2P preview targets Apple silicon Macs: Claude supplies its runtime, and the Codex ZIP includes one. Only a display name and exchanged public connection cards are needed. There is no Airshower account server to host. Iroh provides public discovery and encrypted relay fallback.
 
 **The desktop packages are previews.** Tests cover encrypted peer request/reply, owner approval, scoped context/files, revocation, replay, and restart recovery. They do not establish installation in the real apps or automatic wakeup of idle desktop chats. [P2P desktop setup and current limits](docs/p2p-desktop.md).
 
@@ -76,6 +76,7 @@ The reference implementation uses **curated context excerpts and explicitly uplo
 | Human review | P2P uses a local native window; no hosted approval page. The HTTP adapter retains form/HTTPS review. |
 | A2A interoperability | Optional A2A 1.0 HTTP+JSON facade with an enumerated subset; [scope and limitations](docs/a2a.md). |
 | Existing desktop conversation wake-up | **Not implemented or verified.** MCP tool availability does not wake a chat. |
+| Optional background agent | Owner-approved helper responds to permitted requests while the extension is alive. Real Codex P2P model reply verified; Claude live reply blocked by account usage limit. [Scope and setup](docs/background-agent.md). |
 | Automatic chat access, local file discovery | **Not implemented.** Source connectors are future work. |
 | Internet transport | Iroh discovery, direct encrypted connections and relay fallback. See [evidence](docs/p2p-verification.md); actual two-Mac desktop operation is unverified. |
 | End-to-end encryption | Implemented for P2P via Iroh. The separate HTTP application relay remains trusted with plaintext. |

@@ -49,6 +49,28 @@ test('real encrypted direct peers require both pinned identities, preserve the e
   assert.throws(() => b.claim(denied.id), { code: 'approval_required' });
 });
 
+test('local observers see persisted incoming work and permission changes without granting access', async t => {
+  const { a, b, connect, send } = await fixture(t); await connect();
+  const observed = [];
+  b.subscribe(() => { throw new Error('A broken observer must not break delivery'); });
+  const unsubscribe = b.subscribe(() => observed.push(JSON.parse(fs.readFileSync(b.store.filename, 'utf8'))));
+  const request = await send();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(observed.some(data => data.requests[request.id]?.status === 'pending_approval'));
+  assert.throws(() => b.claim(request.id), { code: 'approval_required' });
+  await b.policy(a.id, ['task'], []);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(observed.at(-1).contacts[a.id].policy.kinds, ['task']);
+  // Changing a standing policy does not retroactively approve an older request.
+  assert.throws(() => b.claim(request.id), { code: 'approval_required' });
+  await b.disconnect(a.id);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(observed.at(-1).contacts[a.id].active, false);
+  unsubscribe(); const length = observed.length;
+  b.notify(); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(observed.length, length);
+});
+
 test('dismissal never approves; only exact human text can answer ask_human', async t => {
   const { a, b, decisions, connect, send } = await fixture(t); await connect();
   const r = await send('ask_human');

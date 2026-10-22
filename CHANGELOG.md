@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0 — optional background agent preview
+
+- Added chat-controlled, native-owner-approved background handling using an
+  installed Codex or Claude Code subscription runtime. No API key is copied.
+- Incoming requests trigger scoped inference, native human review or approved
+  file handoff. Tasks needing external actions retain a local draft for the main
+  agent; they are not reported as completed.
+- Added cancellation/revocation checks, a durable ten-request hourly cap,
+  serialized processing, bounded subprocesses and explicit interrupted-job retry.
+- Verified an idle-to-model-to-peer reply with real Codex inference and encrypted
+  local P2P. Claude login/launch works; its successful live model reply remains
+  unverified because the account reached its usage limit.
+
+The original desktop chat is not awakened, and its history is not inherited.
+No always-on service or vendor runtime is installed. Actual desktop installation
+and two-Mac operation remain unverified. See [background scope](docs/background-agent.md).
+
 ## 0.3.0 — experimental P2P desktop preview
 
 - Added Iroh encrypted peer transport, local endpoint identities and bilateral
